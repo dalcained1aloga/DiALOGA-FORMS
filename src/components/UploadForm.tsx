@@ -14,6 +14,25 @@ interface UploadFormProps {
   isLoading: boolean;
 }
 
+function sanitizeBlobPathname(filename: string): string {
+  const lastDot = filename.lastIndexOf('.');
+  const stem = lastDot > 0 ? filename.slice(0, lastDot) : filename;
+  const extension = lastDot > 0 ? filename.slice(lastDot + 1) : '';
+
+  const sanitizedStem = stem
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const sanitizedName = extension
+    ? `${sanitizedStem || 'file'}.${extension.toLowerCase()}`
+    : sanitizedStem || 'file';
+
+  return `${Date.now()}-${sanitizedName}`;
+}
+
 export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -51,7 +70,8 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   };
 
   const uploadFileToBlob = async (file: File, onProgress?: (loaded: number, total: number) => void) => {
-    const result = await upload(file.name, file, {
+    const pathname = sanitizeBlobPathname(file.name);
+    const result = await upload(pathname, file, {
       access: 'public',
       handleUploadUrl: '/api/upload-token',
       onUploadProgress: onProgress
