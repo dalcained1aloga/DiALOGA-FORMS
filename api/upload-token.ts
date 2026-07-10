@@ -16,6 +16,7 @@ export const ALLOWED_UPLOAD_CONTENT_TYPES = [
   'application/pdf',
   'image/png',
   'image/jpeg',
+  'image/webp',
   'image/svg+xml',
 ];
 
