@@ -4,7 +4,8 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Image as ImageIcon, Sparkles, AlertCircle, Languages, RefreshCw, FileCode } from 'lucide-react';
+import { upload } from '@vercel/blob/client';
+import { Upload, FileText, Image as ImageIcon, Sparkles, Languages, RefreshCw, FileCode } from 'lucide-react';
 import { SAMPLE_DRAFTS, DEFAULT_LOGO_SVG, DEFAULT_WATERMARK_SVG } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -20,7 +21,9 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   const [textDraft, setTextDraft] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
   const [language, setLanguage] = useState<'en' | 'es'>('en');
-  
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   // Hover/Drag states for styles
   const [isDragDraft, setIsDragDraft] = useState(false);
   const [isDragLogo, setIsDragLogo] = useState(false);
@@ -47,30 +50,94 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const uploadFileToBlob = async (file: File, onProgress?: (loaded: number, total: number) => void) => {
+    const result = await upload(file.name, file, {
+      access: 'public',
+      handleUploadUrl: '/api/upload-token',
+      onUploadProgress: onProgress
+        ? ({ loaded, total }) => {
+            if (total > 0) onProgress(loaded, total);
+          }
+        : undefined,
+    });
+    return result.url;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData();
-    
-    if (draftFile) {
-      formData.append('draft', draftFile);
-    } else if (textDraft.trim()) {
-      formData.append('textDraft', textDraft);
-    } else {
-      alert(language === 'en' ? 'Please upload a draft file or select a sample draft.' : 'Por favor, suba un archivo de borrador o seleccione un borrador de muestra.');
+
+    if (!draftFile && !textDraft.trim()) {
+      alert(
+        language === 'en'
+          ? 'Please upload a draft file or select a sample draft.'
+          : 'Por favor, suba un archivo de borrador o seleccione un borrador de muestra.'
+      );
       return;
     }
 
-    if (logoFile) {
-      formData.append('logo', logoFile);
-    }
-    if (watermarkFile) {
-      formData.append('watermark', watermarkFile);
-    }
+    const filesToUpload = [draftFile, logoFile, watermarkFile].filter(Boolean) as File[];
+    let completedBytes = 0;
+    const totalBytes = filesToUpload.reduce((sum, file) => sum + file.size, 0);
 
-    formData.append('customPrompt', customPrompt);
-    formData.append('language', language);
+    const trackProgress = (loaded: number, total: number) => {
+      if (totalBytes === 0) return;
+      const fileShare = total / totalBytes;
+      const overall = Math.min(100, Math.round(((completedBytes + loaded * fileShare) / totalBytes) * 100));
+      setUploadProgress(overall);
+    };
 
-    onConvert(formData);
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      let draftUrl: string | undefined;
+      let draftFilename: string | undefined;
+      let draftMimeType: string | undefined;
+      let logoUrl: string | undefined;
+      let watermarkUrl: string | undefined;
+
+      if (draftFile) {
+        draftUrl = await uploadFileToBlob(draftFile, trackProgress);
+        completedBytes += draftFile.size;
+        draftFilename = draftFile.name;
+        draftMimeType = draftFile.type;
+      }
+
+      if (logoFile) {
+        logoUrl = await uploadFileToBlob(logoFile, trackProgress);
+        completedBytes += logoFile.size;
+      }
+
+      if (watermarkFile) {
+        watermarkUrl = await uploadFileToBlob(watermarkFile, trackProgress);
+        completedBytes += watermarkFile.size;
+      }
+
+      const payload = {
+        draftUrl,
+        logoUrl,
+        watermarkUrl,
+        draftFilename,
+        draftMimeType,
+        textDraft: draftFile ? undefined : textDraft.trim(),
+        customPrompt,
+        language,
+      };
+
+      onConvert(
+        new Blob([JSON.stringify(payload)], { type: 'application/json' }) as unknown as FormData
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'File upload failed';
+      alert(
+        language === 'en'
+          ? `Upload failed: ${message}`
+          : `Error al subir archivos: ${message}`
+      );
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   // Drag and drop handlers
@@ -378,11 +445,20 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
         <div className="border-t border-slate-100 pt-6 flex justify-end">
           <button
             type="submit"
-            disabled={isLoading || (!draftFile && !textDraft.trim())}
+            disabled={isLoading || isUploading || (!draftFile && !textDraft.trim())}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:shadow-none transition-all duration-150 cursor-pointer text-base hover:scale-[1.02] active:scale-[0.98]"
             id="convert-button"
           >
-            {isLoading ? (
+            {isUploading ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                <span>
+                  {language === 'en'
+                    ? `Uploading files... ${uploadProgress}%`
+                    : `Subiendo archivos... ${uploadProgress}%`}
+                </span>
+              </>
+            ) : isLoading ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
                 <span>{language === 'en' ? 'Converting with Gemini...' : 'Convirtiendo con Gemini...'}</span>
@@ -399,7 +475,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
 
       {/* Loading state overlays/cards with fun status lines */}
       <AnimatePresence>
-        {isLoading && (
+        {(isLoading || isUploading) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -421,12 +497,22 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
                 </div>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">
-                {language === 'en' ? 'AI Conversion In Progress' : 'Conversión de IA en Progreso'}
+                {isUploading
+                  ? language === 'en'
+                    ? 'Uploading Files'
+                    : 'Subiendo Archivos'
+                  : language === 'en'
+                    ? 'AI Conversion In Progress'
+                    : 'Conversión de IA en Progreso'}
               </h3>
               <p className="text-sm text-slate-500 mb-6">
-                {language === 'en'
-                  ? 'Gemini is reading your draft, extracting sections, optimizing grid alignments, matching logo colors, and building a fully translated bilingual form.'
-                  : 'Gemini está leyendo su borrador, extrayendo secciones, optimizando alineaciones de cuadrícula, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
+                {isUploading
+                  ? language === 'en'
+                    ? `Securely uploading your files to storage (${uploadProgress}%).`
+                    : `Subiendo sus archivos de forma segura al almacenamiento (${uploadProgress}%).`
+                  : language === 'en'
+                    ? 'Gemini is reading your draft, extracting sections, optimizing grid alignments, matching logo colors, and building a fully translated bilingual form.'
+                    : 'Gemini está leyendo su borrador, extrayendo secciones, optimizando alineaciones de cuadrícula, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
               </p>
 
               {/* Fake progress/status text rotation */}
