@@ -96,8 +96,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const body = await parseHandleUploadBody(req);
     const jsonResponse = await handleUploadTokenRequest(body, req);
+    console.log('[upload-token] handleUpload response:', JSON.stringify(jsonResponse));
     return res.status(200).json(jsonResponse);
   } catch (error: unknown) {
+    console.log('[upload-token] ERROR:', error);
     const message = error instanceof Error ? error.message : 'Upload token request failed';
     return res.status(400).json({ error: message });
   }

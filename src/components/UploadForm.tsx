@@ -42,6 +42,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   const [language, setLanguage] = useState<'en' | 'es'>('en');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Hover/Drag states for styles
   const [isDragDraft, setIsDragDraft] = useState(false);
@@ -71,16 +72,40 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
 
   const uploadFileToBlob = async (file: File, onProgress?: (loaded: number, total: number) => void) => {
     const pathname = sanitizeBlobPathname(file.name);
-    const result = await upload(pathname, file, {
-      access: 'public',
-      handleUploadUrl: '/api/upload-token',
-      onUploadProgress: onProgress
-        ? ({ loaded, total }) => {
-            if (total > 0) onProgress(loaded, total);
-          }
-        : undefined,
-    });
-    return result.url;
+    try {
+      const result = await upload(pathname, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload-token',
+        onUploadProgress: onProgress
+          ? ({ loaded, total }) => {
+              if (total > 0) onProgress(loaded, total);
+            }
+          : undefined,
+      });
+      console.log('[upload] result url:', result?.url);
+      return result.url;
+    } catch (error: unknown) {
+      const err = error as {
+        name?: string;
+        message?: string;
+        status?: number;
+        response?: { status?: number; text?: string };
+      };
+      const name = error instanceof Error ? error.name : err?.name ?? 'Unknown';
+      const message = error instanceof Error ? error.message : err?.message ?? String(error);
+      const status = err?.status ?? err?.response?.status;
+      const responseText = err?.response?.text;
+      const details = [
+        `name: ${name}`,
+        `message: ${message}`,
+        status !== undefined ? `status: ${status}` : null,
+        responseText ? `response: ${responseText}` : null,
+      ]
+        .filter(Boolean)
+        .join(' | ');
+      setUploadError(details);
+      throw error;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,6 +134,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
     try {
       setIsUploading(true);
       setUploadProgress(0);
+      setUploadError(null);
 
       let draftUrl: string | undefined;
       let draftFilename: string | undefined;
@@ -460,6 +486,13 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
             className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all"
           />
         </div>
+
+        {uploadError && (
+          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 font-mono break-all">
+            <p className="font-bold mb-1">[upload diagnostic]</p>
+            <p>{uploadError}</p>
+          </div>
+        )}
 
         {/* Submit action */}
         <div className="border-t border-slate-100 pt-6 flex justify-end">
