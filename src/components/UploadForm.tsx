@@ -194,7 +194,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center gap-1.5 mb-4">
           <span className="text-[10px] text-slate-400">Powered by</span>
-          <img src="/logo.png" alt="DiALOGA" className="h-5" />
+          <img src="/logo.png" alt="DiALOGA" className="h-8" />
         </div>
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl leading-none">
           DiALOGA Forms AI
@@ -512,11 +512,11 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
               className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 text-center"
             >
               <div className="relative inline-block mb-6">
-                <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border-4 border-blue-100 mx-auto animate-pulse">
+                <div className="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center border-4 border-blue-100 mx-auto animate-pulse">
                   <img
                     src="/favicon.png"
                     alt="DiALOGA"
-                    className="w-12 h-12 object-contain animate-spin"
+                    className="w-[72px] h-[72px] object-contain animate-spin"
                     style={{ animationDuration: '5s' }}
                   />
                 </div>
