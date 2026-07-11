@@ -444,6 +444,305 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
   const isLastSection = activeSectionFlatIndex === flatSectionIds.length - 1;
   const activeField = getSelectedField();
 
+  const allSections = form.pages.flatMap(page => page.sections);
+  const paperSheetClassName = `paper-sheet bg-white p-8 shadow-lg border border-slate-200 relative overflow-hidden flex flex-col justify-between ${getFontFamilyClass(theme.fontFamily)}`;
+  const paperSheetScreenStyle: React.CSSProperties = {
+    backgroundColor: theme.backgroundColor,
+    color: theme.textColor,
+    minHeight: '1050px',
+  };
+  const paperSheetPrintStyle: React.CSSProperties = {
+    backgroundColor: theme.backgroundColor,
+    color: theme.textColor,
+  };
+
+  const renderScreenWatermark = () =>
+    theme.watermarkStyle === 'tiled' ? (
+      <div
+        className="screen-watermark absolute inset-0 pointer-events-none z-0 select-none"
+        style={{
+          opacity: theme.watermarkOpacity,
+          backgroundImage: `url(${watermark})`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '160px 160px',
+        }}
+      />
+    ) : (
+      <div
+        className="screen-watermark absolute inset-0 pointer-events-none z-0 flex items-center justify-center opacity-100 select-none"
+        style={{ opacity: theme.watermarkOpacity }}
+      >
+        <img
+          src={watermark}
+          alt="Watermark"
+          referrerPolicy="no-referrer"
+          className="w-4/5 h-4/5 object-contain"
+        />
+      </div>
+    );
+
+  const renderPrintWatermark = () => (
+    <div
+      aria-hidden="true"
+      className={`print-watermark-layer hidden print:block ${
+        theme.watermarkStyle === 'tiled'
+          ? 'print-watermark-layer--tiled'
+          : 'print-watermark-layer--centered'
+      }`}
+    />
+  );
+
+  const renderFormHeader = () => (
+    <div
+      className="flex flex-col md:flex-row items-center justify-between border-b pb-4 mb-4"
+      style={{ borderColor: theme.primaryColor + '30' }}
+    >
+      {theme.logoPosition === 'left' && (
+        <div className="mb-2 md:mb-0">
+          <img
+            src={logo}
+            alt="Logo"
+            referrerPolicy="no-referrer"
+            className="object-contain"
+            style={{
+              height: `${40 * ((theme.logoScale || 100) / 100)}px`,
+              maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`,
+            }}
+          />
+        </div>
+      )}
+
+      <div
+        className={`flex-1 text-center ${
+          theme.logoPosition === 'left'
+            ? 'md:text-left md:pl-4'
+            : theme.logoPosition === 'right'
+              ? 'md:text-right md:pr-4'
+              : 'text-center'
+        }`}
+      >
+        <h2 className="text-xl font-bold tracking-tight" style={{ color: theme.primaryColor }}>
+          {t(form.formTitle, formLang)}
+        </h2>
+        {form.formDescription && (
+          <p className="text-[10px] mt-0.5 text-slate-500 max-w-xl mx-auto md:mx-0 font-medium">
+            {t(form.formDescription, formLang)}
+          </p>
+        )}
+      </div>
+
+      {theme.logoPosition === 'right' && (
+        <div className="mt-2 md:mt-0">
+          <img
+            src={logo}
+            alt="Logo"
+            referrerPolicy="no-referrer"
+            className="object-contain"
+            style={{
+              height: `${40 * ((theme.logoScale || 100) / 100)}px`,
+              maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`,
+            }}
+          />
+        </div>
+      )}
+
+      {theme.logoPosition === 'center' && (
+        <div className="order-first w-full flex justify-center mb-2">
+          <img
+            src={logo}
+            alt="Logo"
+            referrerPolicy="no-referrer"
+            className="object-contain"
+            style={{
+              height: `${40 * ((theme.logoScale || 100) / 100)}px`,
+              maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const renderField = (field: FormField) => {
+    const ansVal = answers[field.id] || '';
+    const showAnswers = printWithAnswers;
+
+    return (
+      <div
+        key={field.id}
+        className="flex flex-col field-container"
+        style={{ gridColumn: `span ${field.gridWidth}` }}
+      >
+        <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5 flex items-center">
+          <span>{t(field.label, formLang)}</span>
+          {field.required && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
+
+        {field.type === 'textarea' ? (
+          <textarea
+            value={showAnswers ? ansVal : ''}
+            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+            placeholder={showAnswers ? t(field.placeholder, formLang) : ''}
+            rows={1}
+            className="w-full text-xs py-1 bg-transparent border-b outline-none transition-all resize-none"
+            style={{
+              borderColor: theme.primaryColor + '30',
+            }}
+          />
+        ) : field.type === 'select' ? (
+          <select
+            value={showAnswers ? ansVal : ''}
+            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+            className="w-full text-xs py-1 bg-transparent border-b outline-none transition-all cursor-pointer"
+            style={{
+              borderColor: theme.primaryColor + '30',
+            }}
+          >
+            <option value="">--</option>
+            {field.options?.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {t(opt.label, formLang)}
+              </option>
+            ))}
+          </select>
+        ) : field.type === 'checkbox' ? (
+          <div className="flex items-center space-x-1.5 py-1">
+            <input
+              type="checkbox"
+              checked={showAnswers ? !!ansVal : false}
+              onChange={(e) => handleAnswerChange(field.id, e.target.checked)}
+              className="w-3 h-3 rounded-sm text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+              style={{ accentColor: theme.primaryColor }}
+            />
+            <span className="text-[11px] text-slate-700 font-medium">
+              {t(field.placeholder, formLang) ||
+                (formLang === 'en' ? 'Select if applicable' : 'Seleccionar si aplica')}
+            </span>
+          </div>
+        ) : field.type === 'radio' ? (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 py-1">
+            {field.options?.map((opt) => (
+              <label
+                key={opt.value}
+                className="flex items-center space-x-1 text-[11px] text-slate-700 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name={field.id}
+                  value={opt.value}
+                  checked={showAnswers ? ansVal === opt.value : false}
+                  onChange={() => handleAnswerChange(field.id, opt.value)}
+                  className="w-3 h-3 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  style={{ accentColor: theme.primaryColor }}
+                />
+                <span>{t(opt.label, formLang)}</span>
+              </label>
+            ))}
+          </div>
+        ) : field.type === 'signature' ? (
+          <div className="flex flex-col gap-1 mt-1 signature-container">
+            <div
+              className="h-8 border-b flex items-end text-xs italic font-serif relative"
+              style={{ borderColor: theme.primaryColor + '40' }}
+            >
+              {showAnswers && ansVal ? (
+                <span className="text-indigo-950 font-serif italic text-sm absolute bottom-0.5 left-1 transform rotate-[-1deg] select-none tracking-wider">
+                  {ansVal}
+                </span>
+              ) : (
+                <input
+                  type="text"
+                  placeholder={
+                    showAnswers
+                      ? formLang === 'en'
+                        ? 'Type name to sign...'
+                        : 'Escriba nombre para firmar...'
+                      : ''
+                  }
+                  onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+                  className="w-full text-left text-[11px] text-slate-400 font-mono border-none bg-transparent outline-none pb-0.5"
+                />
+              )}
+            </div>
+            <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">
+              {formLang === 'en' ? 'Authorized Signature / Date' : 'Firma Autorizada / Fecha'}
+            </div>
+          </div>
+        ) : (
+          <input
+            type={field.type}
+            value={showAnswers ? ansVal : ''}
+            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
+            placeholder={showAnswers ? t(field.placeholder, formLang) : ''}
+            className="w-full text-xs py-1 bg-transparent border-b outline-none transition-all"
+            style={{
+              borderColor: theme.primaryColor + '30',
+            }}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const renderSection = (section: FormSection) => (
+    <div key={section.id} className="space-y-2 section-container">
+      <div
+        className="border-b pb-0.5 flex items-center justify-between"
+        style={{ borderColor: theme.primaryColor + '50' }}
+      >
+        <h3
+          className="text-[10px] font-bold uppercase tracking-widest flex items-center"
+          style={{ color: theme.primaryColor }}
+        >
+          {t(section.sectionTitle, formLang)}
+        </h3>
+        {section.sectionDescription && (
+          <span className="text-[9px] italic text-slate-400">
+            {t(section.sectionDescription, formLang)}
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-12 gap-x-4 gap-y-2.5">
+        {section.fields.map((field) => renderField(field))}
+      </div>
+    </div>
+  );
+
+  const renderSections = (sections: FormSection[], spacingClass = 'space-y-6') => (
+    <div className={spacingClass}>{sections.map((section) => renderSection(section))}</div>
+  );
+
+  const renderDocumentFooter = (pageNum: number, totalPages: number) => (
+    <footer className="relative z-10 mt-auto pt-4 border-t border-slate-150 flex justify-between items-center text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+      {form.formCode ? <span>{form.formCode}</span> : <span />}
+      <span>
+        {formLang === 'en' ? 'Page' : 'Página'} {String(pageNum).padStart(2, '0')}{' '}
+        {formLang === 'en' ? 'of' : 'de'} {String(totalPages).padStart(2, '0')}
+      </span>
+    </footer>
+  );
+
+  const renderScreenPaperSheet = (
+    sections: FormSection[],
+    pageNum: number,
+    totalPages: number,
+    options?: { key?: number; sectionSpacing?: 'space-y-4' | 'space-y-6' }
+  ) => (
+    <div
+      key={options?.key ?? 'screen-sheet'}
+      className={paperSheetClassName}
+      style={paperSheetScreenStyle}
+    >
+      {renderScreenWatermark()}
+      <div className="relative z-10 space-y-4 flex-grow flex flex-col justify-start">
+        {renderFormHeader()}
+        {renderSections(sections, options?.sectionSpacing ?? 'space-y-6')}
+      </div>
+      {renderDocumentFooter(pageNum, totalPages)}
+    </div>
+  );
+
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 overflow-x-hidden" id="form-preview-root">
       
@@ -455,6 +754,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
           --form-accent: ${theme.accentColor};
           --form-bg: ${theme.backgroundColor};
           --form-text: ${theme.textColor};
+          --watermark-url: url(${watermark});
+          --watermark-opacity: ${theme.watermarkOpacity};
         }
         .form-font-sans { font-family: "Inter", system-ui, -apple-system, sans-serif; }
         .form-font-serif { font-family: "Playfair Display", Georgia, Cambria, serif; }
@@ -485,21 +786,46 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             padding: 24px !important;
             box-shadow: none !important;
             border: none !important;
-            page-break-after: always !important;
+            page-break-after: auto !important;
+            break-after: auto !important;
             background: white !important;
             width: 100% !important;
             height: auto !important;
-            min-height: 100vh !important;
+            min-height: auto !important;
             position: relative !important;
           }
-          .paper-sheet:last-child {
-            page-break-after: avoid !important;
+          .screen-watermark {
+            display: none !important;
+          }
+          .print-watermark-layer {
+            display: block !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: var(--watermark-opacity);
+          }
+          .print-watermark-layer--centered {
+            background-image: var(--watermark-url);
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 80% auto;
+          }
+          .print-watermark-layer--tiled {
+            background-image: var(--watermark-url);
+            background-repeat: repeat;
+            background-size: 160px 160px;
+          }
+          .print-content-layer {
+            position: relative;
+            z-index: 1;
           }
           .field-container {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-          }
-          .section-container {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
           }
@@ -1349,503 +1675,28 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
           {/* Page stack representation */}
           <div id="print-paper-container" className="space-y-8 w-full max-w-[800px] print:space-y-0 print:w-full">
-            {continuousFlow ? (
-              <div 
-                className={`paper-sheet bg-white p-8 shadow-lg border border-slate-200 relative overflow-hidden flex flex-col justify-between ${getFontFamilyClass(theme.fontFamily)}`}
-                style={{ 
-                  backgroundColor: theme.backgroundColor,
-                  color: theme.textColor,
-                  minHeight: '1050px',
-                }}
-              >
-                {/* Full-bleed Absolute Watermark Layer inside paper sheet */}
-                {theme.watermarkStyle === 'tiled' ? (
-                  <div 
-                    className="absolute inset-0 pointer-events-none z-0 select-none"
-                    style={{ 
-                      opacity: theme.watermarkOpacity,
-                      backgroundImage: `url(${watermark})`,
-                      backgroundRepeat: 'repeat',
-                      backgroundSize: '160px 160px'
-                    }}
-                  />
-                ) : (
-                  <div 
-                    className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center opacity-100 select-none"
-                    style={{ opacity: theme.watermarkOpacity }}
-                  >
-                    <img 
-                      src={watermark} 
-                      alt="Watermark" 
-                      referrerPolicy="no-referrer"
-                      className="w-4/5 h-4/5 object-contain"
-                    />
-                  </div>
-                )}
+            {renderPrintWatermark()}
 
-                {/* Main Content Container */}
-                <div className="relative z-10 space-y-4 flex-grow flex flex-col justify-start">
-                  
-                  {/* Dynamic Header with aligned Logo */}
-                  <div className={`flex flex-col md:flex-row items-center justify-between border-b pb-4 mb-4`} style={{ borderColor: theme.primaryColor + '30' }}>
-                    
-                    {/* Balanced Logo alignment container */}
-                    {theme.logoPosition === 'left' && (
-                      <div className="mb-2 md:mb-0">
-                        <img 
-                          src={logo} 
-                          alt="Logo" 
-                          referrerPolicy="no-referrer"
-                          className="object-contain"
-                          style={{
-                            height: `${40 * ((theme.logoScale || 100) / 100)}px`,
-                            maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    <div className={`flex-1 text-center ${theme.logoPosition === 'left' ? 'md:text-left md:pl-4' : theme.logoPosition === 'right' ? 'md:text-right md:pr-4' : 'text-center'}`}>
-                      <h2 className="text-xl font-bold tracking-tight" style={{ color: theme.primaryColor }}>
-                        {t(form.formTitle, formLang)}
-                      </h2>
-                      {form.formDescription && (
-                        <p className="text-[10px] mt-0.5 text-slate-500 max-w-xl mx-auto md:mx-0 font-medium">
-                          {t(form.formDescription, formLang)}
-                        </p>
-                      )}
-                    </div>
-
-                    {theme.logoPosition === 'right' && (
-                      <div className="mt-2 md:mt-0">
-                        <img 
-                          src={logo} 
-                          alt="Logo" 
-                          referrerPolicy="no-referrer"
-                          className="object-contain"
-                          style={{
-                            height: `${40 * ((theme.logoScale || 100) / 100)}px`,
-                            maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {theme.logoPosition === 'center' && (
-                      <div className="order-first w-full flex justify-center mb-2">
-                        <img 
-                          src={logo} 
-                          alt="Logo" 
-                          referrerPolicy="no-referrer"
-                          className="object-contain"
-                          style={{
-                            height: `${40 * ((theme.logoScale || 100) / 100)}px`,
-                            maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`
-                          }}
-                        />
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Form fields rendering structured by section */}
-                  <div className="space-y-6">
-                    {form.pages.flatMap((page) => page.sections).map((section) => (
-                      <div key={section.id} className="space-y-2 section-container">
-                        
-                        {/* Section header */}
-                        <div className="border-b pb-0.5 flex items-center justify-between" style={{ borderColor: theme.primaryColor + '50' }}>
-                          <h3 className="text-[10px] font-bold uppercase tracking-widest flex items-center" style={{ color: theme.primaryColor }}>
-                            {t(section.sectionTitle, formLang)}
-                          </h3>
-                          {section.sectionDescription && (
-                            <span className="text-[9px] italic text-slate-400">
-                              {t(section.sectionDescription, formLang)}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Fields 12-column Grid */}
-                        <div className="grid grid-cols-12 gap-x-4 gap-y-2.5">
-                          {section.fields.map((field) => {
-                            const ansVal = answers[field.id] || '';
-                            const showAnswers = printWithAnswers;
-
-                            return (
-                              <div 
-                                key={field.id} 
-                                className="flex flex-col field-container"
-                                style={{ gridColumn: `span ${field.gridWidth}` }}
-                              >
-                                {/* Label */}
-                                <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5 flex items-center">
-                                  <span>{t(field.label, formLang)}</span>
-                                  {field.required && <span className="text-red-500 ml-0.5">*</span>}
-                                </label>
-
-                                {/* Form Input Renderer based on type */}
-                                {field.type === 'textarea' ? (
-                                  <textarea
-                                    value={showAnswers ? ansVal : ''}
-                                    onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                    placeholder={showAnswers ? t(field.placeholder, formLang) : ''}
-                                    rows={1}
-                                    className={`w-full text-xs py-1 bg-transparent border-b outline-none transition-all resize-none`}
-                                    style={{ 
-                                      borderColor: theme.primaryColor + '30',
-                                    }}
-                                  />
-                                ) : field.type === 'select' ? (
-                                  <select
-                                    value={showAnswers ? ansVal : ''}
-                                    onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                    className={`w-full text-xs py-1 bg-transparent border-b outline-none transition-all cursor-pointer`}
-                                    style={{ 
-                                      borderColor: theme.primaryColor + '30',
-                                    }}
-                                  >
-                                    <option value="">--</option>
-                                    {field.options?.map((opt) => (
-                                      <option key={opt.value} value={opt.value}>
-                                        {t(opt.label, formLang)}
-                                      </option>
-                                    ))}
-                                  </select>
-                                ) : field.type === 'checkbox' ? (
-                                  <div className="flex items-center space-x-1.5 py-1">
-                                    <input
-                                      type="checkbox"
-                                      checked={showAnswers ? !!ansVal : false}
-                                      onChange={(e) => handleAnswerChange(field.id, e.target.checked)}
-                                      className="w-3 h-3 rounded-sm text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                      style={{ accentColor: theme.primaryColor }}
-                                    />
-                                    <span className="text-[11px] text-slate-700 font-medium">
-                                      {t(field.placeholder, formLang) || (formLang === 'en' ? 'Select if applicable' : 'Seleccionar si aplica')}
-                                    </span>
-                                  </div>
-                                ) : field.type === 'radio' ? (
-                                  <div className="flex flex-wrap gap-x-3 gap-y-1 py-1">
-                                    {field.options?.map((opt) => (
-                                      <label key={opt.value} className="flex items-center space-x-1 text-[11px] text-slate-700 cursor-pointer">
-                                        <input
-                                          type="radio"
-                                          name={field.id}
-                                          value={opt.value}
-                                          checked={showAnswers ? ansVal === opt.value : false}
-                                          onChange={() => handleAnswerChange(field.id, opt.value)}
-                                          className="w-3 h-3 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                          style={{ accentColor: theme.primaryColor }}
-                                        />
-                                        <span>{t(opt.label, formLang)}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                ) : field.type === 'signature' ? (
-                                  <div className="flex flex-col gap-1 mt-1 signature-container">
-                                    <div 
-                                      className="h-8 border-b flex items-end text-xs italic font-serif relative"
-                                      style={{ borderColor: theme.primaryColor + '40' }}
-                                    >
-                                      {showAnswers && ansVal ? (
-                                        <span className="text-indigo-950 font-serif italic text-sm absolute bottom-0.5 left-1 transform rotate-[-1deg] select-none tracking-wider">
-                                          {ansVal}
-                                        </span>
-                                      ) : (
-                                        <input 
-                                          type="text" 
-                                          placeholder={showAnswers ? (formLang === 'en' ? 'Type name to sign...' : 'Escriba nombre para firmar...') : ''} 
-                                          onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                          className="w-full text-left text-[11px] text-slate-400 font-mono border-none bg-transparent outline-none pb-0.5"
-                                        />
-                                      )}
-                                    </div>
-                                    <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">
-                                      {formLang === 'en' ? 'Authorized Signature / Date' : 'Firma Autorizada / Fecha'}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <input
-                                    type={field.type}
-                                    value={showAnswers ? ansVal : ''}
-                                    onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                    placeholder={showAnswers ? t(field.placeholder, formLang) : ''}
-                                    className={`w-full text-xs py-1 bg-transparent border-b outline-none transition-all`}
-                                    style={{ 
-                                      borderColor: theme.primaryColor + '30',
-                                    }}
-                                  />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                </div>
-
-                {/* Document footer & page counter (Prints cleanly) */}
-                <footer className="relative z-10 mt-auto pt-4 border-t border-slate-150 flex justify-between items-center text-[8px] text-slate-400 font-bold uppercase tracking-widest">
-                  {form.formCode ? <span>{form.formCode}</span> : <span />}
-                  <span>
-                    {formLang === 'en' ? 'Page' : 'Página'} {String(1).padStart(2, '0')} {formLang === 'en' ? 'of' : 'de'} {String(form.pages.length).padStart(2, '0')}
-                  </span>
-                </footer>
-
-              </div>
-            ) : (
-              form.pages.map((page) => (
-                <div 
-                  key={page.pageNumber}
-                  className={`paper-sheet bg-white p-8 shadow-lg border border-slate-200 relative overflow-hidden flex flex-col justify-between ${getFontFamilyClass(theme.fontFamily)}`}
-                  style={{ 
-                    backgroundColor: theme.backgroundColor,
-                    color: theme.textColor,
-                    minHeight: '1050px', // standard letter layout ratio on screens
-                  }}
-                >
-                  
-                  {/* Full-bleed Absolute Watermark Layer inside paper sheet */}
-                  {theme.watermarkStyle === 'tiled' ? (
-                    <div 
-                      className="absolute inset-0 pointer-events-none z-0 select-none"
-                      style={{ 
-                        opacity: theme.watermarkOpacity,
-                        backgroundImage: `url(${watermark})`,
-                        backgroundRepeat: 'repeat',
-                        backgroundSize: '160px 160px'
-                      }}
-                    />
-                  ) : (
-                    <div 
-                      className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center opacity-100 select-none"
-                      style={{ opacity: theme.watermarkOpacity }}
-                    >
-                      <img 
-                        src={watermark} 
-                        alt="Watermark" 
-                        referrerPolicy="no-referrer"
-                        className="w-4/5 h-4/5 object-contain"
-                      />
-                    </div>
+            <div className="print:hidden">
+              {continuousFlow
+                ? renderScreenPaperSheet(allSections, 1, form.pages.length)
+                : form.pages.map((page) =>
+                    renderScreenPaperSheet(page.sections, page.pageNumber, form.pages.length, {
+                      key: page.pageNumber,
+                      sectionSpacing: 'space-y-4',
+                    })
                   )}
+            </div>
 
-                  {/* Main Content Container */}
-                  <div className="relative z-10 space-y-4 flex-grow flex flex-col justify-start">
-                    
-                    {/* Dynamic Header with aligned Logo */}
-                    <div className={`flex flex-col md:flex-row items-center justify-between border-b pb-4 mb-4`} style={{ borderColor: theme.primaryColor + '30' }}>
-                      
-                      {/* Balanced Logo alignment container */}
-                      {theme.logoPosition === 'left' && (
-                        <div className="mb-2 md:mb-0">
-                          <img 
-                            src={logo} 
-                            alt="Logo" 
-                            referrerPolicy="no-referrer"
-                            className="object-contain"
-                            style={{
-                              height: `${40 * ((theme.logoScale || 100) / 100)}px`,
-                              maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <div className={`flex-1 text-center ${theme.logoPosition === 'left' ? 'md:text-left md:pl-4' : theme.logoPosition === 'right' ? 'md:text-right md:pr-4' : 'text-center'}`}>
-                        <h2 className="text-xl font-bold tracking-tight" style={{ color: theme.primaryColor }}>
-                          {t(form.formTitle, formLang)}
-                        </h2>
-                        {form.formDescription && (
-                          <p className="text-[10px] mt-0.5 text-slate-500 max-w-xl mx-auto md:mx-0 font-medium">
-                            {t(form.formDescription, formLang)}
-                          </p>
-                        )}
-                      </div>
-
-                      {theme.logoPosition === 'right' && (
-                        <div className="mt-2 md:mt-0">
-                          <img 
-                            src={logo} 
-                            alt="Logo" 
-                            referrerPolicy="no-referrer"
-                            className="object-contain"
-                            style={{
-                              height: `${40 * ((theme.logoScale || 100) / 100)}px`,
-                              maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {theme.logoPosition === 'center' && (
-                        <div className="order-first w-full flex justify-center mb-2">
-                          <img 
-                            src={logo} 
-                            alt="Logo" 
-                            referrerPolicy="no-referrer"
-                            className="object-contain"
-                            style={{
-                              height: `${40 * ((theme.logoScale || 100) / 100)}px`,
-                              maxWidth: `${120 * ((theme.logoScale || 100) / 100)}px`
-                            }}
-                          />
-                        </div>
-                      )}
-
-                    </div>
-
-                    {/* Form fields rendering structured by section */}
-                    <div className="space-y-4">
-                      {page.sections.map((section) => (
-                        <div key={section.id} className="space-y-2 section-container">
-                          
-                          {/* Section header */}
-                          <div className="border-b pb-0.5 flex items-center justify-between" style={{ borderColor: theme.primaryColor + '50' }}>
-                            <h3 className="text-[10px] font-bold uppercase tracking-widest flex items-center" style={{ color: theme.primaryColor }}>
-                              {t(section.sectionTitle, formLang)}
-                            </h3>
-                            {section.sectionDescription && (
-                              <span className="text-[9px] italic text-slate-400">
-                                {t(section.sectionDescription, formLang)}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Fields 12-column Grid */}
-                          <div className="grid grid-cols-12 gap-x-4 gap-y-2.5">
-                            {section.fields.map((field) => {
-                              const ansVal = answers[field.id] || '';
-                              const showAnswers = printWithAnswers;
-
-                              return (
-                                <div 
-                                  key={field.id} 
-                                  className="flex flex-col field-container"
-                                  style={{ gridColumn: `span ${field.gridWidth}` }}
-                                >
-                                  {/* Label */}
-                                  <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5 flex items-center">
-                                    <span>{t(field.label, formLang)}</span>
-                                    {field.required && <span className="text-red-500 ml-0.5">*</span>}
-                                  </label>
-
-                                  {/* Form Input Renderer based on type */}
-                                  {field.type === 'textarea' ? (
-                                    <textarea
-                                      value={showAnswers ? ansVal : ''}
-                                      onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                      placeholder={showAnswers ? t(field.placeholder, formLang) : ''}
-                                      rows={1}
-                                      className={`w-full text-xs py-1 bg-transparent border-b outline-none transition-all resize-none`}
-                                      style={{ 
-                                        borderColor: theme.primaryColor + '30',
-                                      }}
-                                    />
-                                  ) : field.type === 'select' ? (
-                                    <select
-                                      value={showAnswers ? ansVal : ''}
-                                      onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                      className={`w-full text-xs py-1 bg-transparent border-b outline-none transition-all cursor-pointer`}
-                                      style={{ 
-                                        borderColor: theme.primaryColor + '30',
-                                      }}
-                                    >
-                                      <option value="">--</option>
-                                      {field.options?.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
-                                          {t(opt.label, formLang)}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  ) : field.type === 'checkbox' ? (
-                                    <div className="flex items-center space-x-1.5 py-1">
-                                      <input
-                                        type="checkbox"
-                                        checked={showAnswers ? !!ansVal : false}
-                                        onChange={(e) => handleAnswerChange(field.id, e.target.checked)}
-                                        className="w-3 h-3 rounded-sm text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                        style={{ accentColor: theme.primaryColor }}
-                                      />
-                                      <span className="text-[11px] text-slate-700 font-medium">
-                                        {t(field.placeholder, formLang) || (formLang === 'en' ? 'Select if applicable' : 'Seleccionar si aplica')}
-                                      </span>
-                                    </div>
-                                  ) : field.type === 'radio' ? (
-                                    <div className="flex flex-wrap gap-x-3 gap-y-1 py-1">
-                                      {field.options?.map((opt) => (
-                                        <label key={opt.value} className="flex items-center space-x-1 text-[11px] text-slate-700 cursor-pointer">
-                                          <input
-                                            type="radio"
-                                            name={field.id}
-                                            value={opt.value}
-                                            checked={showAnswers ? ansVal === opt.value : false}
-                                            onChange={() => handleAnswerChange(field.id, opt.value)}
-                                            className="w-3 h-3 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                            style={{ accentColor: theme.primaryColor }}
-                                          />
-                                          <span>{t(opt.label, formLang)}</span>
-                                        </label>
-                                      ))}
-                                    </div>
-                                  ) : field.type === 'signature' ? (
-                                    <div className="flex flex-col gap-1 mt-1 signature-container">
-                                      <div 
-                                        className="h-8 border-b flex items-end text-xs italic font-serif relative"
-                                        style={{ borderColor: theme.primaryColor + '40' }}
-                                      >
-                                        {showAnswers && ansVal ? (
-                                          <span className="text-indigo-950 font-serif italic text-sm absolute bottom-0.5 left-1 transform rotate-[-1deg] select-none tracking-wider">
-                                            {ansVal}
-                                          </span>
-                                        ) : (
-                                          <input 
-                                            type="text" 
-                                            placeholder={showAnswers ? (formLang === 'en' ? 'Type name to sign...' : 'Escriba nombre para firmar...') : ''} 
-                                            onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                            className="w-full text-left text-[11px] text-slate-400 font-mono border-none bg-transparent outline-none pb-0.5"
-                                          />
-                                        )}
-                                      </div>
-                                      <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">
-                                        {formLang === 'en' ? 'Authorized Signature / Date' : 'Firma Autorizada / Fecha'}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <input
-                                      type={field.type}
-                                      value={showAnswers ? ansVal : ''}
-                                      onChange={(e) => handleAnswerChange(field.id, e.target.value)}
-                                      placeholder={showAnswers ? t(field.placeholder, formLang) : ''}
-                                      className={`w-full text-xs py-1 bg-transparent border-b outline-none transition-all`}
-                                      style={{ 
-                                        borderColor: theme.primaryColor + '30',
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                  </div>
-
-                  {/* Document footer & page counter (Prints cleanly) */}
-                  <footer className="relative z-10 mt-auto pt-4 border-t border-slate-150 flex justify-between items-center text-[8px] text-slate-400 font-bold uppercase tracking-widest">
-                    {form.formCode ? <span>{form.formCode}</span> : <span />}
-                    <span>
-                      {formLang === 'en' ? 'Page' : 'Página'} {String(page.pageNumber).padStart(2, '0')} {formLang === 'en' ? 'of' : 'de'} {String(form.pages.length).padStart(2, '0')}
-                    </span>
-                  </footer>
-
+            <div className="hidden print:block">
+              <div className={paperSheetClassName} style={paperSheetPrintStyle}>
+                <div className="print-content-layer space-y-4 flex flex-col justify-start">
+                  {renderFormHeader()}
+                  {renderSections(allSections)}
                 </div>
-              ))
-            )}
+                {renderDocumentFooter(1, form.pages.length)}
+              </div>
+            </div>
           </div>
 
         </div>
