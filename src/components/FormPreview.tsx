@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ConvertedForm, FormTheme, FormSection, FormField, FormPage, BilingualText, FieldType } from '../types';
 import { 
   Printer, 
@@ -481,16 +482,29 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
       </div>
     );
 
-  const renderPrintWatermark = () => (
-    <div
-      aria-hidden="true"
-      className={`print-watermark-layer hidden print:block ${
-        theme.watermarkStyle === 'tiled'
-          ? 'print-watermark-layer--tiled'
-          : 'print-watermark-layer--centered'
-      }`}
-    />
-  );
+  const renderPrintWatermark = () => {
+    const watermarkLayer = (
+      <div
+        aria-hidden="true"
+        className={`print-watermark-layer hidden print:block ${
+          theme.watermarkStyle === 'tiled'
+            ? 'print-watermark-layer--tiled'
+            : 'print-watermark-layer--centered'
+        }`}
+        style={
+          {
+            '--watermark-url': `url(${watermark})`,
+            '--watermark-opacity': theme.watermarkOpacity,
+          } as React.CSSProperties
+        }
+      />
+    );
+
+    if (typeof document !== 'undefined') {
+      return createPortal(watermarkLayer, document.body);
+    }
+    return null;
+  };
 
   const renderFormHeader = () => (
     <div
@@ -745,7 +759,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 overflow-x-hidden" id="form-preview-root">
-      
+      {renderPrintWatermark()}
+
       {/* 1. Dynamic head styles injected for variables */}
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
@@ -1675,8 +1690,6 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
           {/* Page stack representation */}
           <div id="print-paper-container" className="space-y-8 w-full max-w-[800px] print:space-y-0 print:w-full">
-            {renderPrintWatermark()}
-
             <div className="print:hidden">
               {continuousFlow
                 ? renderScreenPaperSheet(allSections, 1, form.pages.length)
