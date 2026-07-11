@@ -128,6 +128,42 @@ function isQaAuditEnabled(): boolean {
   return process.env.ENABLE_QA_AUDIT === 'true';
 }
 
+function toBilingualText(spanish: string | undefined): { en: string; es: string } | undefined {
+  if (spanish === undefined) return undefined;
+  return { en: spanish, es: spanish };
+}
+
+function mapSpanishOnlyToBilingualForm(spanishForm: Record<string, unknown>): Record<string, unknown> {
+  const pages = (spanishForm.pages as Array<Record<string, unknown>>) || [];
+
+  return {
+    ...spanishForm,
+    formTitle: toBilingualText(spanishForm.formTitle as string),
+    formDescription: toBilingualText(spanishForm.formDescription as string | undefined),
+    hasEnglish: false,
+    pages: pages.map((page) => ({
+      ...page,
+      sections: ((page.sections as Array<Record<string, unknown>>) || []).map((section) => ({
+        ...section,
+        sectionTitle: toBilingualText(section.sectionTitle as string),
+        sectionDescription: toBilingualText(section.sectionDescription as string | undefined),
+        fields: ((section.fields as Array<Record<string, unknown>>) || []).map((field) => ({
+          ...field,
+          label: toBilingualText(field.label as string),
+          placeholder: toBilingualText(field.placeholder as string | undefined),
+          helpText: toBilingualText(field.helpText as string | undefined),
+          options: field.options
+            ? ((field.options as Array<Record<string, unknown>>) || []).map((option) => ({
+                ...option,
+                label: toBilingualText(option.label as string),
+              }))
+            : undefined,
+        })),
+      })),
+    })),
+  };
+}
+
 export async function convertForm(input: ConvertInput): Promise<ConvertResult> {
   const ai = getAiClient();
   const {
@@ -229,11 +265,11 @@ export async function convertForm(input: ConvertInput): Promise<ConvertResult> {
   }
 
   const systemInstruction = `You are an expert full-stack developer and UX/UI brand designer specializing in print-ready, high-fidelity corporate, medical, and administrative forms.
-Your goal is to parse form drafts (which can be unstructured documents, spreadsheets, lists, or tables) and convert them into a structured, bilingual (English and Spanish) JSON representation of a beautifully styled webform.
+Your goal is to parse form drafts (which can be unstructured documents, spreadsheets, lists, or tables) and convert them into a structured, Spanish-only JSON representation of a beautifully styled webform.
 
 CRITICAL DESIGN & CONTENT RULES:
 1. 100% CONTENT FIDELITY (NON-NEGOTIABLE): You must respect 100% of the draft content. You are strictly forbidden from omitting, dropping, summarizing, grouping, or combining different fields, options, or questions from the draft. Every single question, field, description, declaration, list of required documents or attachments, checklist, option, instruction block, note, or signature block in the draft must be fully represented. Even small, short, or auxiliary text fields and checkboxes must be preserved. Complete content integrity is non-negotiable.
-2. BILINGUAL TRANSLATION: Every field label, section title, description, placeholder, and option MUST be provided in both English (en) and Spanish (es). If the source is in one language, translate it professionally to the other. Ensure high quality terminology.
+2. SPANISH-ONLY TEXT: Every field label, section title, description, placeholder, and option MUST be written in Spanish. If the source draft is in another language, translate it professionally into Spanish. Use high-quality, natural Spanish terminology.
 3. LAYOUT & GRID ARRANGEMENT: Use the 'gridWidth' field (values 1-12) to place fields side-by-side cleanly and professionally.
    - Fields like 'First Name' & 'Last Name' should have gridWidth: 6.
    - Fields like 'City', 'State', 'Zip' should have gridWidth: 4, 4, 4 or 5, 3, 4.
@@ -257,12 +293,12 @@ CRITICAL DESIGN & CONTENT RULES:
    - Use 'signature' for signature blocks (always provide name, signature, and date). Place signature blocks at the very bottom of the last page.
    - Use 'grid' for matrices of radio buttons or checkboxes (like ratings or multi-question reviews).
 7. WATERMARK OPACITY: Set 'watermarkOpacity' to a safe, subtle level (e.g., 0.05) so it is visible but does not interfere with the readability of text.
-8. REQUIRED DOCUMENTS & ATTACHMENTS CHECKLISTS: If the form contains a list of required documents to attach or checklist of items, do NOT omit them. Represent them as interactive 'checkbox' fields so users can tick them as they provide the files (e.g., in a dedicated section named "Required Documents / Documentos Requeridos" or "Attachments / Adjuntos").`;
+8. REQUIRED DOCUMENTS & ATTACHMENTS CHECKLISTS: If the form contains a list of required documents to attach or checklist of items, do NOT omit them. Represent them as interactive 'checkbox' fields so users can tick them as they provide the files (e.g., in a dedicated section named "Documentos Requeridos" or "Adjuntos").`;
 
-  const userPromptText = `Please convert this form draft into a beautifully structured, bilingual webform.
+  const userPromptText = `Please convert this form draft into a beautifully structured, Spanish-only webform.
 ${customPrompt ? `ADDITIONAL USER INSTRUCTIONS: ${customPrompt}` : ''}
 ${logoFile ? 'The brand logo is attached. Make sure to extract its dominant colors and style for the theme.' : "No logo was attached, so please generate a premium, high-contrast, modern professional color theme appropriate for this form's context."}
-The primary language of the input draft is "${userLanguage}". Provide a completely translated bilingual form with English ('en') and Spanish ('es') translations for every user-facing text element.
+The primary language of the input draft is "${userLanguage}". Produce all user-facing text in Spanish (translate from the source language if needed).
 IMPORTANT MANDATES FOR 100% RECALL AND COMPLETENESS:
 - You MUST capture, transcribe, and represent 100% of the questions, fields, checkboxes, options, list items, and text blocks in the draft.
 - Do NOT consolidate, summarize, simplify, drop, or omit ANY part of the draft. Each item should be preserved in its full, exact context.
@@ -275,22 +311,8 @@ IMPORTANT MANDATES FOR 100% RECALL AND COMPLETENESS:
   const responseSchema: Record<string, unknown> = {
     type: Type.OBJECT,
     properties: {
-      formTitle: {
-        type: Type.OBJECT,
-        properties: {
-          en: { type: Type.STRING },
-          es: { type: Type.STRING },
-        },
-        required: ['en', 'es'],
-      },
-      formDescription: {
-        type: Type.OBJECT,
-        properties: {
-          en: { type: Type.STRING },
-          es: { type: Type.STRING },
-        },
-        required: ['en', 'es'],
-      },
+      formTitle: { type: Type.STRING, description: 'Form title in Spanish' },
+      formDescription: { type: Type.STRING, description: 'Form description in Spanish' },
       theme: {
         type: Type.OBJECT,
         properties: {
@@ -328,35 +350,15 @@ IMPORTANT MANDATES FOR 100% RECALL AND COMPLETENESS:
                 type: Type.OBJECT,
                 properties: {
                   id: { type: Type.STRING },
-                  sectionTitle: {
-                    type: Type.OBJECT,
-                    properties: {
-                      en: { type: Type.STRING },
-                      es: { type: Type.STRING },
-                    },
-                    required: ['en', 'es'],
-                  },
-                  sectionDescription: {
-                    type: Type.OBJECT,
-                    properties: {
-                      en: { type: Type.STRING },
-                      es: { type: Type.STRING },
-                    },
-                  },
+                  sectionTitle: { type: Type.STRING, description: 'Section title in Spanish' },
+                  sectionDescription: { type: Type.STRING, description: 'Section description in Spanish' },
                   fields: {
                     type: Type.ARRAY,
                     items: {
                       type: Type.OBJECT,
                       properties: {
                         id: { type: Type.STRING },
-                        label: {
-                          type: Type.OBJECT,
-                          properties: {
-                            en: { type: Type.STRING },
-                            es: { type: Type.STRING },
-                          },
-                          required: ['en', 'es'],
-                        },
+                        label: { type: Type.STRING, description: 'Field label in Spanish' },
                         type: {
                           type: Type.STRING,
                           enum: [
@@ -373,26 +375,14 @@ IMPORTANT MANDATES FOR 100% RECALL AND COMPLETENESS:
                             'grid',
                           ],
                         },
-                        placeholder: {
-                          type: Type.OBJECT,
-                          properties: {
-                            en: { type: Type.STRING },
-                            es: { type: Type.STRING },
-                          },
-                        },
+                        placeholder: { type: Type.STRING, description: 'Placeholder text in Spanish' },
                         required: { type: Type.BOOLEAN },
                         gridWidth: {
                           type: Type.INTEGER,
                           description:
                             'column span (1-12) in grid. Compress fields: use 6 for side-by-side, 4 for 3-in-a-row, 12 for full width.',
                         },
-                        helpText: {
-                          type: Type.OBJECT,
-                          properties: {
-                            en: { type: Type.STRING },
-                            es: { type: Type.STRING },
-                          },
-                        },
+                        helpText: { type: Type.STRING, description: 'Help text in Spanish' },
                         defaultValue: { type: Type.STRING },
                         options: {
                           type: Type.ARRAY,
@@ -400,14 +390,7 @@ IMPORTANT MANDATES FOR 100% RECALL AND COMPLETENESS:
                             type: Type.OBJECT,
                             properties: {
                               value: { type: Type.STRING },
-                              label: {
-                                type: Type.OBJECT,
-                                properties: {
-                                  en: { type: Type.STRING },
-                                  es: { type: Type.STRING },
-                                },
-                                required: ['en', 'es'],
-                              },
+                              label: { type: Type.STRING, description: 'Option label in Spanish' },
                             },
                             required: ['value', 'label'],
                           },
@@ -519,9 +502,9 @@ RIGOROUS RULES FOR 100% COMPLETENESS:
 1. NO OMISSION ALLOWED: You are strictly forbidden from omitting, dropping, summarizing, grouping, or combining any fields, options, or questions from the draft. Every single question, field, description, declaration, list of required documents or attachments, checklist, option, instruction block, note, or signature block in the draft must be fully represented.
 2. DISCOVER MISSING FIELDS: Find every field, checkbox, text label, note, instruction, disclaimer, attachment requirement, or section that was in the draft but is missing or combined in the initial JSON.
 3. PREVENT TRUNCATION: Make sure all sections of the form (especially middle and end sections like Required Documents, Attachments, Notes, Agreements, Disclaimers, and Signatures) are completely included as distinct fields.
-4. REPRESENT REQUIRED DOCUMENTS: If the form draft lists documents that must be attached (e.g. ID, Proof of Residence, Medical Records), model them as individual, interactive 'checkbox' fields under a distinct section named "Required Documents / Documentos Requeridos" or "Attachments / Adjuntos" so the user can tick them off.
+4. REPRESENT REQUIRED DOCUMENTS: If the form draft lists documents that must be attached (e.g. ID, Proof of Residence, Medical Records), model them as individual, interactive 'checkbox' fields under a distinct section named "Documentos Requeridos" or "Adjuntos" so the user can tick them off.
 5. KEEP THE VALID WORK: Keep all the fields, styles, and options that were already correctly generated in the initial JSON. Do not destroy or degrade existing valid form structure; only expand, enrich, and correct any missing parts.
-6. BILINGUAL TRANSLATION: For any newly added or corrected field, section, or option, you MUST translate it beautifully and accurately into both English ('en') and Spanish ('es').
+6. SPANISH-ONLY TEXT: For any newly added or corrected field, section, or option, write all user-facing text in Spanish.
 ${customPrompt ? `7. RESPECT ADDITIONAL USER INSTRUCTIONS: Make sure you also implement these custom rules: "${customPrompt}"` : ''}
 
 Output the final, perfected, 100% complete form JSON according to the schema.`;
@@ -532,7 +515,7 @@ Output the final, perfected, 100% complete form JSON according to the schema.`;
       const auditResponse = await generateContentWithRetry(
         ai,
         auditorContents,
-        'You are a strict, professional Quality Assurance Auditor for digital form designs. Your primary metric is 100% data recall, completeness, and bilingual fidelity.',
+        'You are a strict, professional Quality Assurance Auditor for digital form designs. Your primary metric is 100% data recall, completeness, and Spanish-language fidelity.',
         responseSchema
       );
 
@@ -563,9 +546,11 @@ Output the final, perfected, 100% complete form JSON according to the schema.`;
     watermarkDataUrl = `data:${watermarkFile.mimetype};base64,${watermarkFile.buffer.toString('base64')}`;
   }
 
+  const bilingualForm = mapSpanishOnlyToBilingualForm(finalFormJson);
+
   return {
     success: true,
-    form: finalFormJson,
+    form: bilingualForm,
     logoDataUrl,
     watermarkDataUrl,
   };

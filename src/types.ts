@@ -70,4 +70,5 @@ export interface ConvertedForm {
   formCode?: string;
   theme: FormTheme;
   pages: FormPage[];
+  hasEnglish?: boolean;
 }
