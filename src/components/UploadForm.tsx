@@ -513,14 +513,16 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
             >
               <div className="relative inline-block mb-6">
                 <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border-4 border-blue-100 mx-auto animate-pulse">
-                  <Sparkles className="w-10 h-10 text-blue-600 animate-spin" style={{ animationDuration: '4s' }} />
-                </div>
-                <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1.5 rounded-full border-4 border-white shadow">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <img
+                    src="/favicon.png"
+                    alt="DiALOGA"
+                    className="w-12 h-12 object-contain animate-spin"
+                    style={{ animationDuration: '5s' }}
+                  />
                 </div>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">
-                {language === 'en' ? 'AI Conversion In Progress' : 'Conversión de IA en Progreso'}
+                {language === 'en' ? 'Conversion In Progress' : 'Conversión en Progreso'}
               </h3>
               <p className="text-sm text-slate-500 mb-6">
                 {language === 'en'
