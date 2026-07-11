@@ -484,7 +484,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
             {isLoading ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-                <span>{language === 'en' ? 'Converting with Gemini...' : 'Convirtiendo con Gemini...'}</span>
+                <span>{language === 'en' ? 'Processing your form...' : 'Procesando su formulario...'}</span>
               </>
             ) : (
               <>
@@ -524,8 +524,8 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
               </h3>
               <p className="text-sm text-slate-500 mb-6">
                 {language === 'en'
-                  ? 'Gemini is reading your draft, extracting sections, optimizing grid alignments, matching logo colors, and building a fully translated bilingual form.'
-                  : 'Gemini está leyendo su borrador, extrayendo secciones, optimizando alineaciones de cuadrícula, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
+                  ? 'Reading your draft, extracting sections, optimizing layout, matching your logo colors, and building a fully translated bilingual form.'
+                  : 'Leyendo su borrador, extrayendo secciones, optimizando el diseño, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
               </p>
 
             </motion.div>

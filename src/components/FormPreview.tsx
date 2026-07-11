@@ -491,7 +491,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
           <div className="hidden sm:flex items-center gap-2">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-100">F</div>
             <div>
-              <h1 className="text-sm font-bold leading-none text-slate-900">FormFlow AI</h1>
+              <h1 className="text-sm font-bold leading-none text-slate-900">DiALOGA Forms</h1>
               <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-0.5 font-bold">Bilingual Form Engine</p>
             </div>
           </div>
@@ -1254,7 +1254,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             <div className="mt-6 p-4 bg-slate-900 rounded-xl text-white shadow-xl flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <p className="text-[9px] font-bold opacity-60 uppercase tracking-wider">{appLang === 'en' ? 'AI Layout Engine' : 'Motor de Diseño AI'}</p>
+                  <p className="text-[9px] font-bold opacity-60 uppercase tracking-wider">{appLang === 'en' ? 'Layout Engine' : 'Motor de Diseño'}</p>
                   <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono font-bold px-1.5 py-0.5 rounded uppercase">{appLang === 'en' ? 'Optimized' : 'Optimizado'}</span>
                 </div>
                 <p className="text-xl font-light tracking-tight">{appLang === 'en' ? 'Compressed to' : 'Comprimido a'} <span className="font-extrabold text-indigo-400">{form.pages.length} {form.pages.length === 1 ? 'Page' : 'Pages'}</span></p>
@@ -1388,17 +1388,6 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       </div>
                     )}
 
-                    {/* High density metadata card */}
-                    {theme.logoPosition === 'left' && (
-                      <div className="text-right flex-shrink-0 mt-2 md:mt-0">
-                        <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">
-                          {formLang === 'en' ? 'Form ID' : 'ID del Formulario'}
-                        </p>
-                        <p className="text-[11px] font-mono font-extrabold mt-1" style={{ color: theme.primaryColor }}>
-                          #SJC-2026-01
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   {/* Form fields rendering structured by section */}
@@ -1648,17 +1637,6 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         </div>
                       )}
 
-                      {/* High density metadata card */}
-                      {theme.logoPosition === 'left' && (
-                        <div className="text-right flex-shrink-0 mt-2 md:mt-0">
-                          <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">
-                            {formLang === 'en' ? 'Form ID' : 'ID del Formulario'}
-                          </p>
-                          <p className="text-[11px] font-mono font-extrabold mt-1" style={{ color: theme.primaryColor }}>
-                            #SJC-2026-{100 + page.pageNumber}
-                          </p>
-                        </div>
-                      )}
                     </div>
 
                     {/* Form fields rendering structured by section */}
