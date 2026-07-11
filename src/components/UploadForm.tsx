@@ -13,15 +13,30 @@ interface UploadFormProps {
   isLoading: boolean;
 }
 
-const MAX_IMAGE_DIMENSION = 1600;
-const IMAGE_QUALITY = 0.8;
-const MAX_PAYLOAD_BYTES = 4_000_000;
+const MAX_PAYLOAD_BYTES = 3_000_000;
+
+type CompressionProfile = {
+  maxDimension: number;
+  quality: number;
+  forceJpeg?: boolean;
+};
+
+const LOGO_DRAFT_PROFILE: CompressionProfile = {
+  maxDimension: 1600,
+  quality: 0.8,
+};
+
+const WATERMARK_PROFILE: CompressionProfile = {
+  maxDimension: 1000,
+  quality: 0.5,
+  forceJpeg: true,
+};
 
 function isImageFile(file: File): boolean {
   return file.type.startsWith('image/');
 }
 
-async function compressImageFile(file: File): Promise<File> {
+async function compressImageFile(file: File, profile: CompressionProfile = LOGO_DRAFT_PROFILE): Promise<File> {
   if (!isImageFile(file)) return file;
 
   const img = new Image();
@@ -36,8 +51,8 @@ async function compressImageFile(file: File): Promise<File> {
 
     let { width, height } = img;
     const longest = Math.max(width, height);
-    if (longest > MAX_IMAGE_DIMENSION) {
-      const scale = MAX_IMAGE_DIMENSION / longest;
+    if (longest > profile.maxDimension) {
+      const scale = profile.maxDimension / longest;
       width = Math.round(width * scale);
       height = Math.round(height * scale);
     }
@@ -50,12 +65,12 @@ async function compressImageFile(file: File): Promise<File> {
 
     ctx.drawImage(img, 0, 0, width, height);
 
-    const preferWebP = file.type === 'image/webp';
+    const preferWebP = !profile.forceJpeg && file.type === 'image/webp';
     const mimeType = preferWebP ? 'image/webp' : 'image/jpeg';
     const ext = preferWebP ? 'webp' : 'jpg';
 
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, mimeType, IMAGE_QUALITY);
+      canvas.toBlob(resolve, mimeType, profile.quality);
     });
 
     if (!blob || blob.size >= file.size) return file;
@@ -116,7 +131,9 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
           : draftFile
         : null;
       const processedLogo = logoFile ? await compressImageFile(logoFile) : null;
-      const processedWatermark = watermarkFile ? await compressImageFile(watermarkFile) : null;
+      const processedWatermark = watermarkFile
+        ? await compressImageFile(watermarkFile, WATERMARK_PROFILE)
+        : null;
 
       const files = [processedDraft, processedLogo, processedWatermark].filter(Boolean) as File[];
       const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
