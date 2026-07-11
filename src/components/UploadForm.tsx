@@ -75,7 +75,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
   const [textDraft, setTextDraft] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
-  const [language, setLanguage] = useState<'en' | 'es'>('en');
+  const [language, setLanguage] = useState<'en' | 'es'>('es');
   const [payloadError, setPayloadError] = useState<string | null>(null);
 
   // Hover/Drag states for styles

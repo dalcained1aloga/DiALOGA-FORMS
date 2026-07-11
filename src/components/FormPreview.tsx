@@ -38,9 +38,9 @@ interface FormPreviewProps {
 
 export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl, onBack }: FormPreviewProps) {
   // Application Language state (EN vs ES)
-  const [appLang, setAppLang] = useState<'en' | 'es'>('en');
+  const [appLang, setAppLang] = useState<'en' | 'es'>('es');
   // Form Language state (EN vs ES)
-  const [formLang, setFormLang] = useState<'en' | 'es'>('en');
+  const [formLang, setFormLang] = useState<'en' | 'es'>('es');
 
   // Form State - allows users to edit sections, fields, etc.
   const [form, setForm] = useState<ConvertedForm>(initialForm);
