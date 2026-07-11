@@ -450,7 +450,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
   const paperSheetScreenStyle: React.CSSProperties = {
     backgroundColor: theme.backgroundColor,
     color: theme.textColor,
-    minHeight: '1050px',
+    minHeight: '1035px',
   };
   const paperSheetPrintStyle: React.CSSProperties = {
     backgroundColor: theme.backgroundColor,
