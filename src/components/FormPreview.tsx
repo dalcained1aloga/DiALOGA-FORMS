@@ -19,6 +19,8 @@ import {
   ChevronRight, 
   ChevronLeft,
   ChevronDown,
+  ArrowUp,
+  ArrowDown,
   Sparkles,
   RefreshCw,
   Sliders,
@@ -354,6 +356,38 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
     setSelectedSectionId('');
   };
 
+  // Reorder section in flat reading order (may cross page boundaries)
+  const moveSection = (sectionId: string, direction: 'up' | 'down') => {
+    setForm(prev => {
+      const pageSizes = prev.pages.map(page => page.sections.length);
+      const flatSections = prev.pages.flatMap(page => page.sections);
+
+      const idx = flatSections.findIndex(sec => sec.id === sectionId);
+      if (idx === -1) return prev;
+
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= flatSections.length) return prev;
+
+      const reordered = [...flatSections];
+      [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+
+      const newPages: FormPage[] = [];
+      let offset = 0;
+      let pageNum = 1;
+
+      for (const size of pageSizes) {
+        if (size === 0) continue;
+        const sections = reordered.slice(offset, offset + size);
+        offset += size;
+        if (sections.length > 0) {
+          newPages.push({ pageNumber: pageNum++, sections });
+        }
+      }
+
+      return { ...prev, pages: newPages };
+    });
+  };
+
   // Add Page
   const addPage = () => {
     const newPageNum = form.pages.length + 1;
@@ -404,6 +438,10 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
   };
 
   const activeSection = getSelectedSection();
+  const flatSectionIds = form.pages.flatMap(page => page.sections.map(sec => sec.id));
+  const activeSectionFlatIndex = activeSection ? flatSectionIds.indexOf(activeSection.id) : -1;
+  const isFirstSection = activeSectionFlatIndex === 0;
+  const isLastSection = activeSectionFlatIndex === flatSectionIds.length - 1;
   const activeField = getSelectedField();
 
   return (
@@ -886,14 +924,34 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                         {appLang === 'en' ? 'Section Header Settings' : 'Ajustes del Encabezado de Sección'}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => removeSection(activeSection.id)}
-                        className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
-                        title={appLang === 'en' ? 'Delete Section' : 'Eliminar Sección'}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center space-x-0.5">
+                        <button
+                          type="button"
+                          onClick={() => moveSection(activeSection.id, 'up')}
+                          disabled={isFirstSection}
+                          className="text-slate-500 hover:text-slate-700 p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none"
+                          title={appLang === 'en' ? 'Move Section Up' : 'Mover Sección Arriba'}
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveSection(activeSection.id, 'down')}
+                          disabled={isLastSection}
+                          className="text-slate-500 hover:text-slate-700 p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none"
+                          title={appLang === 'en' ? 'Move Section Down' : 'Mover Sección Abajo'}
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeSection(activeSection.id)}
+                          className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                          title={appLang === 'en' ? 'Delete Section' : 'Eliminar Sección'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">

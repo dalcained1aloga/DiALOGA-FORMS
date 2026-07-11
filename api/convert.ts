@@ -275,7 +275,7 @@ CRITICAL DESIGN & CONTENT RULES:
    - Fields like 'City', 'State', 'Zip' should have gridWidth: 4, 4, 4 or 5, 3, 4.
    - Short fields (e.g., ID, Gender, DOB, Date, Age, Phone) should share rows with other fields to keep the layout looking neat.
    - Only use gridWidth: 12 (full-width) for long fields, textareas, signatures, or grids.
-4. CONTEXT & STRUCTURE: Respect the exact semantic structure of the draft. Keep all sections, groups, instructions, statements, disclaimers, and footnotes. Organize fields into highly logical pages and sections. Page optimization is completely flexible: do NOT try to fit everything onto fewer pages if it means compressing fields so much that items are consolidated or omitted. Let the form span across as many pages as naturally required to preserve perfect fidelity and comfortable spacing.
+4. CONTEXT & STRUCTURE: Respect the exact semantic structure of the draft. Keep all sections, groups, instructions, statements, disclaimers, and footnotes. Preserve the EXACT order of sections as they appear in the source draft; do not reorder or regroup them. Organize fields into highly logical pages and sections. Page optimization is completely flexible: do NOT try to fit everything onto fewer pages if it means compressing fields so much that items are consolidated or omitted. Let the form span across as many pages as naturally required to preserve perfect fidelity and comfortable spacing.
 5. THEME DESIGN: Analyze the brand logo (if provided) to extract:
    - 'primaryColor': The main dominant color.
    - 'secondaryColor': A supporting dark color.
