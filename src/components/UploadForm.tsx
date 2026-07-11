@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Image as ImageIcon, Sparkles, Languages, RefreshCw, FileCode } from 'lucide-react';
-import { SAMPLE_DRAFTS, DEFAULT_LOGO_SVG, DEFAULT_WATERMARK_SVG } from '../constants';
+import { Upload, Image as ImageIcon, Sparkles, Languages, RefreshCw, FileCode } from 'lucide-react';
+import { DEFAULT_LOGO_SVG, DEFAULT_WATERMARK_SVG } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface UploadFormProps {
@@ -88,14 +88,6 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const watermarkInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSelectSample = (index: number) => {
-    const sample = SAMPLE_DRAFTS[index];
-    setTextDraft(sample.text);
-    // Clear draft file if a sample is loaded to avoid confusion
-    setDraftFile(null);
-    if (draftInputRef.current) draftInputRef.current.value = '';
-  };
-
   const handleDraftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -111,8 +103,8 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
     if (!draftFile && !textDraft.trim()) {
       alert(
         language === 'en'
-          ? 'Please upload a draft file or select a sample draft.'
-          : 'Por favor, suba un archivo de borrador o seleccione un borrador de muestra.'
+          ? 'Please upload a draft file or enter draft text.'
+          : 'Por favor, suba un archivo de borrador o ingrese texto del borrador.'
       );
       return;
     }
@@ -248,79 +240,50 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* File Drag and Drop */}
-            <div
-              onDragOver={(e) => onDragOver(e, setIsDragDraft)}
-              onDragLeave={() => onDragLeave(setIsDragDraft)}
-              onDrop={(e) => onDrop(e, setIsDragDraft, (f) => setDraftFile(f), true)}
-              onClick={() => draftInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] ${
-                isDragDraft
-                  ? 'border-blue-500 bg-blue-50/50'
-                  : draftFile
-                  ? 'border-emerald-500 bg-emerald-50/20'
-                  : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50/50'
-              }`}
-            >
-              <input
-                type="file"
-                ref={draftInputRef}
-                onChange={handleDraftChange}
-                accept=".docx,.xlsx,.xls,.pdf,.txt,.csv"
-                className="hidden"
-              />
-              {draftFile ? (
-                <>
-                  <div className="bg-emerald-100 p-3 rounded-full text-emerald-600 mb-2">
-                    <FileCode className="w-8 h-8" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-800 max-w-full truncate px-4">{draftFile.name}</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {(draftFile.size / 1024).toFixed(1)} KB • {language === 'en' ? 'Click to change' : 'Clic para cambiar'}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="bg-slate-100 p-3 rounded-full text-slate-500 mb-2">
-                    <Upload className="w-8 h-8" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    {language === 'en' ? 'Drag & drop form draft' : 'Arrastre y suelte el borrador'}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {language === 'en' ? 'or click to browse from device' : 'o haga clic para buscar en su dispositivo'}
-                  </p>
-                </>
-              )}
-            </div>
-
-            {/* Quick Sample Selector */}
-            <div className="border border-slate-150 rounded-xl p-5 bg-slate-50/50 flex flex-col">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 block">
-                {language === 'en' ? 'Or pick a quick sample draft:' : 'O elija un borrador de muestra rápido:'}
-              </span>
-              <div className="space-y-2 flex-grow flex flex-col justify-center">
-                {SAMPLE_DRAFTS.map((sample, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSelectSample(idx)}
-                    className="flex items-start text-left p-2.5 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-white transition-all group"
-                  >
-                    <FileText className="w-4 h-4 text-blue-500 mt-0.5 mr-2.5 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-700 group-hover:text-blue-600">
-                        {language === 'en' ? sample.name : sample.nameEs}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                        {language === 'en' ? sample.description : sample.descriptionEs}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* File Drag and Drop */}
+          <div
+            onDragOver={(e) => onDragOver(e, setIsDragDraft)}
+            onDragLeave={() => onDragLeave(setIsDragDraft)}
+            onDrop={(e) => onDrop(e, setIsDragDraft, (f) => setDraftFile(f), true)}
+            onClick={() => draftInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] ${
+              isDragDraft
+                ? 'border-blue-500 bg-blue-50/50'
+                : draftFile
+                ? 'border-emerald-500 bg-emerald-50/20'
+                : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50/50'
+            }`}
+          >
+            <input
+              type="file"
+              ref={draftInputRef}
+              onChange={handleDraftChange}
+              accept=".docx,.xlsx,.xls,.pdf,.txt,.csv"
+              className="hidden"
+            />
+            {draftFile ? (
+              <>
+                <div className="bg-emerald-100 p-3 rounded-full text-emerald-600 mb-2">
+                  <FileCode className="w-8 h-8" />
+                </div>
+                <p className="text-sm font-semibold text-slate-800 max-w-full truncate px-4">{draftFile.name}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {(draftFile.size / 1024).toFixed(1)} KB • {language === 'en' ? 'Click to change' : 'Clic para cambiar'}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="bg-slate-100 p-3 rounded-full text-slate-500 mb-2">
+                  <Upload className="w-8 h-8" />
+                </div>
+                <p className="text-sm font-semibold text-slate-700">
+                  {language === 'en' ? 'Drag & drop form draft' : 'Arrastre y suelte el borrador'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {language === 'en' ? 'or click to browse from device' : 'o haga clic para buscar en su dispositivo'}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Text Draft editor as backup */}
