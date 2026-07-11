@@ -192,9 +192,9 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
     <div className="max-w-4xl mx-auto px-4 py-8" id="upload-form-container">
       {/* Header section */}
       <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-4 border border-blue-100">
-          <Sparkles className="w-4 h-4 mr-1.5 text-blue-500 animate-pulse" />
-          Powered by Gemini 3.5 Flash
+        <div className="inline-flex items-center justify-center gap-1.5 mb-4">
+          <span className="text-[10px] text-slate-400">Powered by</span>
+          <img src="/logo.png" alt="DiALOGA" className="h-5" />
         </div>
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl leading-none">
           DiALOGA Forms AI
