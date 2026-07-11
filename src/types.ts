@@ -67,6 +67,7 @@ export interface FormTheme {
 export interface ConvertedForm {
   formTitle: BilingualText;
   formDescription?: BilingualText;
+  formCode?: string;
   theme: FormTheme;
   pages: FormPage[];
 }

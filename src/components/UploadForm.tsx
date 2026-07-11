@@ -197,7 +197,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
           Powered by Gemini 3.5 Flash
         </div>
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl leading-none">
-          {language === 'en' ? 'Bilingual Form Style Converter' : 'Convertidor de Formularios Bilingüe'}
+          DiALOGA Forms AI
         </h1>
         <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
           {language === 'en'
@@ -528,19 +528,6 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
                   : 'Gemini está leyendo su borrador, extrayendo secciones, optimizando alineaciones de cuadrícula, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
               </p>
 
-              {/* Fake progress/status text rotation */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 font-mono text-xs text-slate-600 text-left space-y-1.5 h-20 flex flex-col justify-center">
-                <div className="flex items-center text-blue-600 font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 mr-2 animate-ping" />
-                  <span>[Gemini 3.5] Reading document structure...</span>
-                </div>
-                <div className="text-slate-400">
-                  <span>[Theme] Matching extracted brand palette...</span>
-                </div>
-                <div className="text-slate-400">
-                  <span>[Bilingual] Generating English & Spanish keys...</span>
-                </div>
-              </div>
             </motion.div>
           </motion.div>
         )}
