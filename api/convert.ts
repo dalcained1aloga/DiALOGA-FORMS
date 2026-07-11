@@ -6,9 +6,9 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
-import { del } from '@vercel/blob';
+import multer from 'multer';
 import dotenv from 'dotenv';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 dotenv.config();
 
@@ -571,79 +571,40 @@ Output the final, perfected, 100% complete form JSON according to the schema.`;
   };
 }
 
-export interface ConvertRequestBody {
-  draftUrl?: string;
-  logoUrl?: string;
-  watermarkUrl?: string;
-  draftFilename?: string;
-  draftMimeType?: string;
-  textDraft?: string;
-  customPrompt?: string;
-  language?: string;
-}
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});
 
-async function fetchBlobAsUploadedFile(
-  url: string,
-  options?: { filename?: string; mimeType?: string }
-): Promise<UploadedFile> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch uploaded file from blob storage (${response.status})`);
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  const pathname = new URL(url).pathname;
-  const nameFromUrl = pathname.split('/').pop() || 'upload';
-  const contentType = response.headers.get('content-type')?.split(';')[0]?.trim();
-
+function toUploadedFile(file: { buffer: Buffer; mimetype: string; originalname: string }): UploadedFile {
   return {
-    buffer: Buffer.from(arrayBuffer),
-    mimetype: options?.mimeType || contentType || 'application/octet-stream',
-    originalname: options?.filename || decodeURIComponent(nameFromUrl),
+    buffer: file.buffer,
+    mimetype: file.mimetype,
+    originalname: file.originalname,
   };
 }
 
-async function deleteUploadedBlobs(urls: string[]): Promise<void> {
-  if (urls.length === 0) return;
-
-  try {
-    await del(urls);
-  } catch (error: unknown) {
-    console.warn('Failed to delete uploaded blobs after conversion:', error);
-  }
-}
-
-export async function handleConvertRequest(body: ConvertRequestBody): Promise<ConvertResult> {
-  const blobUrls = [body.draftUrl, body.logoUrl, body.watermarkUrl].filter(
-    (url): url is string => Boolean(url)
-  );
-
-  try {
-    const draftFile = body.draftUrl
-      ? await fetchBlobAsUploadedFile(body.draftUrl, {
-          filename: body.draftFilename,
-          mimeType: body.draftMimeType,
-        })
-      : undefined;
-    const logoFile = body.logoUrl ? await fetchBlobAsUploadedFile(body.logoUrl) : undefined;
-    const watermarkFile = body.watermarkUrl ? await fetchBlobAsUploadedFile(body.watermarkUrl) : undefined;
-
-    return await convertForm({
-      draftFile,
-      logoFile,
-      watermarkFile,
-      textDraft: body.textDraft,
-      customPrompt: body.customPrompt || '',
-      userLanguage: body.language || 'en',
+function runMulter(
+  req: Request,
+  res: Response,
+  middleware: ReturnType<typeof upload.fields>
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    middleware(req, res, (err: unknown) => {
+      if (err) reject(err);
+      else resolve();
     });
-  } finally {
-    await deleteUploadedBlobs(blobUrls);
-  }
+  });
 }
 
 type VercelRequest = Request & {
   method?: string;
-  body?: ConvertRequestBody;
+  body?: Record<string, string>;
+  files?: {
+    [fieldname: string]: Array<{ buffer: Buffer; mimetype: string; originalname: string }>;
+  };
 };
 
 type VercelResponse = {
@@ -657,7 +618,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const result = await handleConvertRequest(req.body || {});
+    await runMulter(
+      req,
+      res as unknown as Response,
+      upload.fields([
+        { name: 'draft', maxCount: 1 },
+        { name: 'logo', maxCount: 1 },
+        { name: 'watermark', maxCount: 1 },
+      ])
+    );
+
+    const files = req.files;
+    const draftFile = files?.['draft']?.[0];
+    const logoFile = files?.['logo']?.[0];
+    const watermarkFile = files?.['watermark']?.[0];
+
+    const result = await convertForm({
+      draftFile: draftFile ? toUploadedFile(draftFile) : undefined,
+      logoFile: logoFile ? toUploadedFile(logoFile) : undefined,
+      watermarkFile: watermarkFile ? toUploadedFile(watermarkFile) : undefined,
+      textDraft: req.body?.textDraft,
+      customPrompt: req.body?.customPrompt || '',
+      userLanguage: req.body?.language || 'en',
+    });
 
     if (!result.success) {
       return res.status(400).json(result);

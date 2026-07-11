@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { upload } from '@vercel/blob/client';
 import { Upload, FileText, Image as ImageIcon, Sparkles, Languages, RefreshCw, FileCode } from 'lucide-react';
 import { SAMPLE_DRAFTS, DEFAULT_LOGO_SVG, DEFAULT_WATERMARK_SVG } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
@@ -14,23 +13,60 @@ interface UploadFormProps {
   isLoading: boolean;
 }
 
-function sanitizeBlobPathname(filename: string): string {
-  const lastDot = filename.lastIndexOf('.');
-  const stem = lastDot > 0 ? filename.slice(0, lastDot) : filename;
-  const extension = lastDot > 0 ? filename.slice(lastDot + 1) : '';
+const MAX_IMAGE_DIMENSION = 1600;
+const IMAGE_QUALITY = 0.8;
+const MAX_PAYLOAD_BYTES = 4_000_000;
 
-  const sanitizedStem = stem
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Za-z0-9._-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
+function isImageFile(file: File): boolean {
+  return file.type.startsWith('image/');
+}
 
-  const sanitizedName = extension
-    ? `${sanitizedStem || 'file'}.${extension.toLowerCase()}`
-    : sanitizedStem || 'file';
+async function compressImageFile(file: File): Promise<File> {
+  if (!isImageFile(file)) return file;
 
-  return `${Date.now()}-${sanitizedName}`;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = url;
+    });
+
+    let { width, height } = img;
+    const longest = Math.max(width, height);
+    if (longest > MAX_IMAGE_DIMENSION) {
+      const scale = MAX_IMAGE_DIMENSION / longest;
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const preferWebP = file.type === 'image/webp';
+    const mimeType = preferWebP ? 'image/webp' : 'image/jpeg';
+    const ext = preferWebP ? 'webp' : 'jpg';
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, mimeType, IMAGE_QUALITY);
+    });
+
+    if (!blob || blob.size >= file.size) return file;
+
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'image';
+    return new File([blob], `${baseName}.${ext}`, { type: mimeType });
+  } catch {
+    return file;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
@@ -40,9 +76,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   const [textDraft, setTextDraft] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
   const [language, setLanguage] = useState<'en' | 'es'>('en');
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [payloadError, setPayloadError] = useState<string | null>(null);
 
   // Hover/Drag states for styles
   const [isDragDraft, setIsDragDraft] = useState(false);
@@ -70,46 +104,9 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
     }
   };
 
-  const uploadFileToBlob = async (file: File, onProgress?: (loaded: number, total: number) => void) => {
-    const pathname = sanitizeBlobPathname(file.name);
-    try {
-      const result = await upload(pathname, file, {
-        access: 'public',
-        handleUploadUrl: '/api/upload-token',
-        onUploadProgress: onProgress
-          ? ({ loaded, total }) => {
-              if (total > 0) onProgress(loaded, total);
-            }
-          : undefined,
-      });
-      console.log('[upload] result url:', result?.url);
-      return result.url;
-    } catch (error: unknown) {
-      const err = error as {
-        name?: string;
-        message?: string;
-        status?: number;
-        response?: { status?: number; text?: string };
-      };
-      const name = error instanceof Error ? error.name : err?.name ?? 'Unknown';
-      const message = error instanceof Error ? error.message : err?.message ?? String(error);
-      const status = err?.status ?? err?.response?.status;
-      const responseText = err?.response?.text;
-      const details = [
-        `name: ${name}`,
-        `message: ${message}`,
-        status !== undefined ? `status: ${status}` : null,
-        responseText ? `response: ${responseText}` : null,
-      ]
-        .filter(Boolean)
-        .join(' | ');
-      setUploadError(details);
-      throw error;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPayloadError(null);
 
     if (!draftFile && !textDraft.trim()) {
       alert(
@@ -120,69 +117,52 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
       return;
     }
 
-    const filesToUpload = [draftFile, logoFile, watermarkFile].filter(Boolean) as File[];
-    let completedBytes = 0;
-    const totalBytes = filesToUpload.reduce((sum, file) => sum + file.size, 0);
-
-    const trackProgress = (loaded: number, total: number) => {
-      if (totalBytes === 0) return;
-      const fileShare = total / totalBytes;
-      const overall = Math.min(100, Math.round(((completedBytes + loaded * fileShare) / totalBytes) * 100));
-      setUploadProgress(overall);
-    };
-
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
-      setUploadError(null);
+      const processedDraft = draftFile
+        ? isImageFile(draftFile)
+          ? await compressImageFile(draftFile)
+          : draftFile
+        : null;
+      const processedLogo = logoFile ? await compressImageFile(logoFile) : null;
+      const processedWatermark = watermarkFile ? await compressImageFile(watermarkFile) : null;
 
-      let draftUrl: string | undefined;
-      let draftFilename: string | undefined;
-      let draftMimeType: string | undefined;
-      let logoUrl: string | undefined;
-      let watermarkUrl: string | undefined;
+      const files = [processedDraft, processedLogo, processedWatermark].filter(Boolean) as File[];
+      const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
 
-      if (draftFile) {
-        draftUrl = await uploadFileToBlob(draftFile, trackProgress);
-        completedBytes += draftFile.size;
-        draftFilename = draftFile.name;
-        draftMimeType = draftFile.type;
+      if (totalBytes > MAX_PAYLOAD_BYTES) {
+        const sizeMb = (totalBytes / (1024 * 1024)).toFixed(2);
+        setPayloadError(
+          `Files are too large to process (${sizeMb} MB). Please use a smaller logo/watermark or a lighter draft file.`
+        );
+        return;
       }
 
-      if (logoFile) {
-        logoUrl = await uploadFileToBlob(logoFile, trackProgress);
-        completedBytes += logoFile.size;
+      const formData = new FormData();
+
+      if (processedDraft) {
+        formData.append('draft', processedDraft);
+      } else if (textDraft.trim()) {
+        formData.append('textDraft', textDraft);
       }
 
-      if (watermarkFile) {
-        watermarkUrl = await uploadFileToBlob(watermarkFile, trackProgress);
-        completedBytes += watermarkFile.size;
+      if (processedLogo) {
+        formData.append('logo', processedLogo);
+      }
+      if (processedWatermark) {
+        formData.append('watermark', processedWatermark);
       }
 
-      const payload = {
-        draftUrl,
-        logoUrl,
-        watermarkUrl,
-        draftFilename,
-        draftMimeType,
-        textDraft: draftFile ? undefined : textDraft.trim(),
-        customPrompt,
-        language,
-      };
+      formData.append('customPrompt', customPrompt);
+      formData.append('language', language);
 
-      onConvert(
-        new Blob([JSON.stringify(payload)], { type: 'application/json' }) as unknown as FormData
-      );
+      onConvert(formData);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'File upload failed';
+      const message = error instanceof Error ? error.message : 'File preparation failed';
       alert(
         language === 'en'
           ? `Upload failed: ${message}`
-          : `Error al subir archivos: ${message}`
+          : `Error al preparar archivos: ${message}`
       );
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -487,10 +467,9 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
           />
         </div>
 
-        {uploadError && (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 font-mono break-all">
-            <p className="font-bold mb-1">[upload diagnostic]</p>
-            <p>{uploadError}</p>
+        {payloadError && (
+          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+            <p>{payloadError}</p>
           </div>
         )}
 
@@ -498,20 +477,11 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
         <div className="border-t border-slate-100 pt-6 flex justify-end">
           <button
             type="submit"
-            disabled={isLoading || isUploading || (!draftFile && !textDraft.trim())}
+            disabled={isLoading || (!draftFile && !textDraft.trim())}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:shadow-none transition-all duration-150 cursor-pointer text-base hover:scale-[1.02] active:scale-[0.98]"
             id="convert-button"
           >
-            {isUploading ? (
-              <>
-                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-                <span>
-                  {language === 'en'
-                    ? `Uploading files... ${uploadProgress}%`
-                    : `Subiendo archivos... ${uploadProgress}%`}
-                </span>
-              </>
-            ) : isLoading ? (
+            {isLoading ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin mr-2" />
                 <span>{language === 'en' ? 'Converting with Gemini...' : 'Convirtiendo con Gemini...'}</span>
@@ -528,7 +498,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
 
       {/* Loading state overlays/cards with fun status lines */}
       <AnimatePresence>
-        {(isLoading || isUploading) && (
+        {isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -550,22 +520,12 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
                 </div>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">
-                {isUploading
-                  ? language === 'en'
-                    ? 'Uploading Files'
-                    : 'Subiendo Archivos'
-                  : language === 'en'
-                    ? 'AI Conversion In Progress'
-                    : 'Conversión de IA en Progreso'}
+                {language === 'en' ? 'AI Conversion In Progress' : 'Conversión de IA en Progreso'}
               </h3>
               <p className="text-sm text-slate-500 mb-6">
-                {isUploading
-                  ? language === 'en'
-                    ? `Securely uploading your files to storage (${uploadProgress}%).`
-                    : `Subiendo sus archivos de forma segura al almacenamiento (${uploadProgress}%).`
-                  : language === 'en'
-                    ? 'Gemini is reading your draft, extracting sections, optimizing grid alignments, matching logo colors, and building a fully translated bilingual form.'
-                    : 'Gemini está leyendo su borrador, extrayendo secciones, optimizando alineaciones de cuadrícula, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
+                {language === 'en'
+                  ? 'Gemini is reading your draft, extracting sections, optimizing grid alignments, matching logo colors, and building a fully translated bilingual form.'
+                  : 'Gemini está leyendo su borrador, extrayendo secciones, optimizando alineaciones de cuadrícula, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
               </p>
 
               {/* Fake progress/status text rotation */}

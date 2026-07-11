@@ -5,11 +5,10 @@
 
 import express from 'express';
 import path from 'path';
+import multer from 'multer';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
-import { handleConvertRequest } from './api/convert';
-import { handleUploadTokenRequest } from './api/upload-token';
-import type { HandleUploadBody } from '@vercel/blob/client';
+import { convertForm, type UploadedFile } from './api/convert';
 
 dotenv.config();
 
@@ -19,34 +18,60 @@ const PORT = 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.post('/api/upload-token', async (req, res) => {
-  try {
-    const jsonResponse = await handleUploadTokenRequest(req.body as HandleUploadBody, req);
-    return res.json(jsonResponse);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Upload token request failed';
-    return res.status(400).json({ error: message });
-  }
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
 });
 
-app.post('/api/convert', async (req, res) => {
-  try {
-    const result = await handleConvertRequest(req.body);
+function toUploadedFile(file: Express.Multer.File): UploadedFile {
+  return {
+    buffer: file.buffer,
+    mimetype: file.mimetype,
+    originalname: file.originalname,
+  };
+}
 
-    if (!result.success) {
-      return res.status(400).json(result);
+app.post(
+  '/api/convert',
+  upload.fields([
+    { name: 'draft', maxCount: 1 },
+    { name: 'logo', maxCount: 1 },
+    { name: 'watermark', maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+
+      const draftFile = files?.['draft']?.[0];
+      const logoFile = files?.['logo']?.[0];
+      const watermarkFile = files?.['watermark']?.[0];
+
+      const result = await convertForm({
+        draftFile: draftFile ? toUploadedFile(draftFile) : undefined,
+        logoFile: logoFile ? toUploadedFile(logoFile) : undefined,
+        watermarkFile: watermarkFile ? toUploadedFile(watermarkFile) : undefined,
+        textDraft: req.body.textDraft,
+        customPrompt: req.body.customPrompt || '',
+        userLanguage: req.body.language || 'en',
+      });
+
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
+
+      return res.json(result);
+    } catch (error: unknown) {
+      console.error('Conversion Error:', error);
+      const message = error instanceof Error ? error.message : 'An error occurred during form conversion';
+      return res.status(500).json({
+        success: false,
+        error: message,
+      });
     }
-
-    return res.json(result);
-  } catch (error: unknown) {
-    console.error('Conversion Error:', error);
-    const message = error instanceof Error ? error.message : 'An error occurred during form conversion';
-    return res.status(500).json({
-      success: false,
-      error: message,
-    });
   }
-});
+);
 
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(process.cwd(), 'dist');
