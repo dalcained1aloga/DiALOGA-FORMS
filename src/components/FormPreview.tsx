@@ -727,13 +727,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
     <div className={spacingClass}>{sections.map((section) => renderSection(section))}</div>
   );
 
-  const renderDocumentFooter = (pageNum: number, totalPages: number) => (
-    <footer className="relative z-10 mt-auto pt-4 border-t border-slate-150 flex justify-between items-center text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+  const renderDocumentFooter = () => (
+    <footer className="relative z-10 mt-auto pt-4 border-t border-slate-150 flex justify-start items-center text-[8px] text-slate-400 font-bold uppercase tracking-widest">
       {form.formCode ? <span>{form.formCode}</span> : <span />}
-      <span>
-        {formLang === 'en' ? 'Page' : 'Página'} {String(pageNum).padStart(2, '0')}{' '}
-        {formLang === 'en' ? 'of' : 'de'} {String(totalPages).padStart(2, '0')}
-      </span>
     </footer>
   );
 
@@ -753,7 +749,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
         {renderFormHeader()}
         {renderSections(sections, options?.sectionSpacing ?? 'space-y-6')}
       </div>
-      {renderDocumentFooter(pageNum, totalPages)}
+      {renderDocumentFooter()}
     </div>
   );
 
@@ -1707,7 +1703,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                   {renderFormHeader()}
                   {renderSections(allSections)}
                 </div>
-                {renderDocumentFooter(1, form.pages.length)}
+                {renderDocumentFooter()}
               </div>
             </div>
           </div>
