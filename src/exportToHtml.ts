@@ -133,6 +133,17 @@ const SKIP_PROPERTIES = new Set([
   'caret-color',
 ]);
 
+/** Layout props that must not be inlined on the root sheet — they clip print flow. */
+const ROOT_SHEET_SKIP_PROPERTIES = new Set([
+  'height',
+  'min-height',
+  'max-height',
+  'overflow',
+  'overflow-x',
+  'overflow-y',
+  'justify-content',
+]);
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -200,13 +211,27 @@ function copyFormFieldValues(source: Element, clone: Element): void {
   }
 }
 
-function buildInlineStyle(computed: CSSStyleDeclaration): string {
+function buildInlineStyle(
+  computed: CSSStyleDeclaration,
+  options?: { isRootSheet?: boolean },
+): string {
   const parts: string[] = [];
+  const isRootSheet = options?.isRootSheet ?? false;
 
   for (const prop of VISUAL_PROPERTIES) {
     if (SKIP_PROPERTIES.has(prop)) continue;
+    if (isRootSheet && ROOT_SHEET_SKIP_PROPERTIES.has(prop)) continue;
+
     const value = computed.getPropertyValue(prop);
     if (!value || value === 'initial' || value === 'inherit') continue;
+
+    if (
+      (prop === 'overflow' || prop === 'overflow-x' || prop === 'overflow-y') &&
+      value === 'hidden'
+    ) {
+      continue;
+    }
+
     parts.push(`${prop}:${value}`);
   }
 
@@ -223,13 +248,30 @@ function buildInlineStyle(computed: CSSStyleDeclaration): string {
   return parts.join(';');
 }
 
+function applyRootFlowOverrides(el: HTMLElement): void {
+  const existing = el.getAttribute('style') || '';
+  const overrides = [
+    'height:auto',
+    'min-height:auto',
+    'max-height:none',
+    'overflow:visible',
+    'overflow-x:visible',
+    'overflow-y:visible',
+    'justify-content:flex-start',
+  ].join(';');
+  el.setAttribute('style', existing ? `${existing};${overrides}` : overrides);
+}
+
 function inlineComputedStyles(root: HTMLElement): void {
-  const walk = (el: HTMLElement) => {
+  const walk = (el: HTMLElement, isRootSheet = false) => {
     const computed = window.getComputedStyle(el);
-    el.setAttribute('style', buildInlineStyle(computed));
+    el.setAttribute('style', buildInlineStyle(computed, { isRootSheet }));
+    if (isRootSheet) {
+      applyRootFlowOverrides(el);
+    }
     Array.from(el.children).forEach((child) => walk(child as HTMLElement));
   };
-  walk(root);
+  walk(root, true);
 }
 
 function createStagingStyles(): HTMLStyleElement {
@@ -253,6 +295,9 @@ function createStagingStyles(): HTMLStyleElement {
       width: 100% !important;
       height: auto !important;
       min-height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      justify-content: flex-start !important;
       position: relative !important;
     }
     #${STAGING_ID} .print-content-layer {
@@ -314,6 +359,11 @@ function buildExportedStyles(): string {
     .form-root {
       position: relative;
       z-index: 1;
+      height: auto;
+      min-height: auto;
+      max-height: none;
+      overflow: visible;
+      justify-content: flex-start;
     }
     .field-container {
       break-inside: avoid;
