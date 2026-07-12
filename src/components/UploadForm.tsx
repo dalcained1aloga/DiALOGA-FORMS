@@ -6,10 +6,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Image as ImageIcon, RefreshCw, FileCode, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import type { AuthUser } from '../auth';
+import { UserMenu } from '../auth';
 
 interface UploadFormProps {
   onConvert: (formData: FormData) => void;
   isLoading: boolean;
+  user: AuthUser;
+  onLogout: () => void;
 }
 
 const MAX_PAYLOAD_BYTES = 3_000_000;
@@ -139,7 +143,7 @@ function CardHeader({
   );
 }
 
-export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
+export default function UploadForm({ onConvert, isLoading, user, onLogout }: UploadFormProps) {
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
@@ -281,12 +285,16 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
             ].join(', '),
           }}
         />
-        <div className="relative flex justify-center">
+        <div className="relative max-w-6xl mx-auto px-4 flex items-center justify-between gap-4">
+          <div className="w-[120px] hidden sm:block" aria-hidden="true" />
           <img
             src="/logo.png"
             alt="DiALOGA"
             className="h-[38px] w-auto brightness-0 invert"
           />
+          <div className="flex justify-end w-[120px] sm:w-auto">
+            <UserMenu user={user} onLogout={onLogout} variant="dark" />
+          </div>
         </div>
       </header>
 

@@ -9,6 +9,7 @@ import multer from 'multer';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import { convertForm, type UploadedFile } from './api/convert';
+import { unauthorizedResponse, verifyGoogleIdToken } from './api/verifyAuth';
 
 dotenv.config();
 
@@ -41,6 +42,11 @@ app.post(
     { name: 'watermark', maxCount: 1 },
   ]),
   async (req, res) => {
+    const verifiedUser = await verifyGoogleIdToken(req.headers.authorization);
+    if (!verifiedUser) {
+      return res.status(401).json(unauthorizedResponse());
+    }
+
     try {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 

@@ -9,6 +9,7 @@ import mammoth from 'mammoth';
 import multer from 'multer';
 import dotenv from 'dotenv';
 import type { Request, Response } from 'express';
+import { unauthorizedResponse, verifyGoogleIdToken } from './verifyAuth';
 
 dotenv.config();
 
@@ -604,6 +605,12 @@ type VercelResponse = {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const authHeader = req.headers.authorization as string | string[] | undefined;
+  const verifiedUser = await verifyGoogleIdToken(authHeader);
+  if (!verifiedUser) {
+    return res.status(401).json(unauthorizedResponse());
   }
 
   try {

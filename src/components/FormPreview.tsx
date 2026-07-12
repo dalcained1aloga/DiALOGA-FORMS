@@ -32,12 +32,16 @@ import {
 } from 'lucide-react';
 import { DEFAULT_LOGO_SVG, DEFAULT_WATERMARK_SVG } from '../constants';
 import { exportToHtml, sanitizeExportFilename } from '../exportToHtml';
+import type { AuthUser } from '../auth';
+import { UserMenu } from '../auth';
 
 interface FormPreviewProps {
   initialForm: ConvertedForm;
   logoDataUrl: string;
   watermarkDataUrl: string;
   onBack: () => void;
+  user: AuthUser;
+  onLogout: () => void;
 }
 
 function DialogaMark({ className = '' }: { className?: string }) {
@@ -62,7 +66,14 @@ function DialogaMark({ className = '' }: { className?: string }) {
   );
 }
 
-export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl, onBack }: FormPreviewProps) {
+export default function FormPreview({
+  initialForm,
+  logoDataUrl,
+  watermarkDataUrl,
+  onBack,
+  user,
+  onLogout,
+}: FormPreviewProps) {
   // Application Language state (EN vs ES)
   const [appLang, setAppLang] = useState<'en' | 'es'>('es');
   // Form Language state (EN vs ES)
@@ -923,6 +934,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
         </div>
 
         <div className="flex items-center gap-4">
+          <UserMenu user={user} onLogout={onLogout} variant="light" />
+
           {/* English toggle hidden — Spanish-only mode. Un-comment to re-enable bilingual UI. */}
           {/* <div className="flex bg-slate-100 p-0.5 rounded-md border border-slate-200">
             <button
