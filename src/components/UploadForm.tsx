@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, RefreshCw, FileCode } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Image as ImageIcon, RefreshCw, FileCode, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface UploadFormProps {
@@ -13,6 +13,15 @@ interface UploadFormProps {
 }
 
 const MAX_PAYLOAD_BYTES = 3_000_000;
+
+const LOADING_PHASES = [
+  'Analizando el borrador',
+  'Estructurando las secciones',
+  'Aplicando el diseño de su marca',
+  'Optimizando el formato final',
+] as const;
+
+const PHASE_INTERVAL_MS = 2600;
 
 type CompressionProfile = {
   maxDimension: number;
@@ -138,6 +147,22 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   const [customPrompt, setCustomPrompt] = useState('');
   const [language, setLanguage] = useState<'en' | 'es'>('es');
   const [payloadError, setPayloadError] = useState<string | null>(null);
+  const [phaseIndex, setPhaseIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setPhaseIndex(0);
+      return;
+    }
+
+    setPhaseIndex(0);
+
+    const interval = setInterval(() => {
+      setPhaseIndex((prev) => Math.min(prev + 1, LOADING_PHASES.length - 1));
+    }, PHASE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   // Hover/Drag states for styles
   const [isDragDraft, setIsDragDraft] = useState(false);
@@ -550,32 +575,74 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#0d1b34]/75 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            style={{ backgroundColor: 'rgba(13, 27, 52, 0.55)' }}
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white p-8 rounded-[14px] max-w-md w-full shadow-2xl border border-[#dde2ea] text-center"
+              className="bg-white w-full max-w-sm rounded-[20px] px-8 py-7 shadow-2xl text-center"
             >
-              <div className="relative inline-block mb-6">
-                <div className="w-24 h-24 rounded-full bg-[#e8f0fa] flex items-center justify-center border-4 border-[#dde2ea] mx-auto animate-pulse">
+              <div className="relative mx-auto mb-5 w-[72px] h-[72px]">
+                <div
+                  className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#3d7dca] animate-spin"
+                  style={{ animationDuration: '1.1s' }}
+                />
+                <div className="absolute inset-[6px] rounded-full bg-[#e8f0fa] flex items-center justify-center">
                   <img
                     src="/favicon.png"
                     alt="DiALOGA"
-                    className="w-[72px] h-[72px] object-contain animate-spin"
+                    className="w-10 h-10 object-contain animate-spin"
                     style={{ animationDuration: '5s' }}
                   />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-[#0d1b34] mb-2">
-                {language === 'en' ? 'Conversion In Progress' : 'Conversión en Progreso'}
+
+              <h3 className="text-lg font-bold text-[#0d1b34] mb-5">
+                Generando su formulario
               </h3>
-              <p className="text-sm text-[#2f4d7a]/80">
-                {language === 'en'
-                  ? 'Reading your draft, extracting sections, optimizing layout, matching your logo colors, and building a fully translated bilingual form.'
-                  : 'Leyendo su borrador, extrayendo secciones, optimizando el diseño, haciendo coincidir los colores de su logotipo y creando su formulario.'}
-              </p>
+
+              <ul className="space-y-3 text-left mb-5">
+                {LOADING_PHASES.map((label, index) => {
+                  const isDone = index < phaseIndex;
+                  const isActive = index === phaseIndex;
+
+                  return (
+                    <li key={label} className="flex items-center gap-3">
+                      <span className="shrink-0 w-5 h-5 flex items-center justify-center">
+                        {isDone ? (
+                          <Check className="w-4 h-4 text-[#3d7dca]" strokeWidth={2.5} />
+                        ) : isActive ? (
+                          <span
+                            className="block w-4 h-4 rounded-full border-2 border-[#dde2ea] border-t-[#3d7dca] animate-spin"
+                            style={{ animationDuration: '1.1s' }}
+                          />
+                        ) : (
+                          <span className="block w-2 h-2 rounded-full bg-[#dde2ea]" />
+                        )}
+                      </span>
+                      <span
+                        className={`text-sm leading-snug ${
+                          isActive
+                            ? 'font-bold text-[#0d1b34]'
+                            : isDone
+                            ? 'text-[#2f4d7a]/70'
+                            : 'text-[#2f4d7a]/40'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div className="border-t border-[#dde2ea] pt-4">
+                <p className="text-xs text-[#2f4d7a]/60 leading-relaxed">
+                  Esto puede tardar hasta un minuto en formularios grandes. Por favor no cierre esta ventana.
+                </p>
+              </div>
             </motion.div>
           </motion.div>
         )}
