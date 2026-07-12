@@ -867,14 +867,14 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-100">F</div>
             <div>
               <h1 className="text-sm font-bold leading-none text-slate-900">DiALOGA Forms</h1>
-              <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-0.5 font-bold">Bilingual Form Engine</p>
+              <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-0.5 font-bold">{appLang === 'en' ? 'Bilingual Form Engine' : 'Motor de Formularios'}</p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* App Translation Swapper */}
-          <div className="flex bg-slate-100 p-0.5 rounded-md border border-slate-200">
+          {/* English toggle hidden — Spanish-only mode. Un-comment to re-enable bilingual UI. */}
+          {/* <div className="flex bg-slate-100 p-0.5 rounded-md border border-slate-200">
             <button
               onClick={() => setAppLang('en')}
               className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
@@ -891,7 +891,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             >
               ES
             </button>
-          </div>
+          </div> */}
 
           <div className="flex items-center gap-2">
             <button
@@ -1599,8 +1599,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                   </div>
                 </div>
 
-                {/* Form Language Toggle */}
-                <div className="border-t border-slate-100 pt-5 space-y-3">
+                {/* Form Language Toggle — English toggle hidden — Spanish-only mode. Un-comment to re-enable bilingual UI. */}
+                {/* <div className="border-t border-slate-100 pt-5 space-y-3">
                   <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
                     <Globe className="w-3.5 h-3.5 mr-2 text-indigo-500" />
                     {appLang === 'en' ? 'Form Sheet Language' : 'Idioma de Hoja de Formulario'}
@@ -1630,7 +1630,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       Español (SP)
                     </button>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Clear answers button */}
                 <div className="border-t border-slate-100 pt-5">
@@ -1680,7 +1680,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             </span>
             <span className="flex items-center text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
               <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-500 animate-pulse" />
-              {formLang === 'en' ? 'Bilingual Form: English Rendering' : 'Formulario Bilingüe: Renderizado en Español'}
+              {formLang === 'en' ? 'Bilingual Form: English Rendering' : 'Formulario: Renderizado en Español'}
             </span>
           </div>
 

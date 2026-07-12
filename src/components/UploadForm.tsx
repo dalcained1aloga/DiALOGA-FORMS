@@ -211,13 +211,13 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
         <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
           {language === 'en'
             ? 'Convert unstructured Word, Excel, or text drafts into elegant, bilingual, print-optimized digital forms with automatic brand design adaptation.'
-            : 'Convierta borradores desestructurados de Word, Excel o texto en elegantes formularios digitales bilingües y optimizados para impresión con adaptación automática de diseño de marca.'}
+            : 'Convierta borradores desestructurados de Word, Excel o texto en elegantes formularios digitales optimizados para impresión con adaptación automática de diseño de marca.'}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-2xl border border-slate-150 shadow-xl shadow-slate-100/50">
-        {/* Language Selection */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+        {/* Language Selection — English toggle hidden — Spanish-only mode. Un-comment to re-enable bilingual UI. */}
+        {/* <div className="flex items-center justify-between border-b border-slate-100 pb-5">
           <div className="flex items-center space-x-2">
             <Languages className="w-5 h-5 text-slate-400" />
             <span className="font-semibold text-slate-700">
@@ -244,7 +244,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
               Español
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* 1. Main Draft Upload or Input */}
         <div className="space-y-4">
@@ -469,7 +469,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
             ) : (
               <>
                 <Sparkles className="w-5 h-5 text-blue-200" />
-                <span>{language === 'en' ? 'Generate Bilingual Webform' : 'Generar Formulario Web Bilingüe'}</span>
+                <span>{language === 'en' ? 'Generate Bilingual Webform' : 'Generar Formulario'}</span>
               </>
             )}
           </button>
@@ -507,7 +507,7 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
               <p className="text-sm text-slate-500 mb-6">
                 {language === 'en'
                   ? 'Reading your draft, extracting sections, optimizing layout, matching your logo colors, and building a fully translated bilingual form.'
-                  : 'Leyendo su borrador, extrayendo secciones, optimizando el diseño, haciendo coincidir los colores de su logotipo y creando un formulario bilingüe traducido.'}
+                  : 'Leyendo su borrador, extrayendo secciones, optimizando el diseño, haciendo coincidir los colores de su logotipo y creando su formulario.'}
               </p>
 
             </motion.div>
