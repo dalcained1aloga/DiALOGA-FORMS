@@ -4,8 +4,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Sparkles, Languages, RefreshCw, FileCode } from 'lucide-react';
-import { DEFAULT_LOGO_SVG, DEFAULT_WATERMARK_SVG } from '../constants';
+import { Upload, Image as ImageIcon, RefreshCw, FileCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface UploadFormProps {
@@ -82,6 +81,53 @@ async function compressImageFile(file: File, profile: CompressionProfile = LOGO_
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+function FacetedHexagon({ step }: { step: number }) {
+  return (
+    <svg width="34" height="38" viewBox="0 0 34 38" fill="none" aria-hidden="true" className="shrink-0">
+      <path
+        d="M17 2 L31.5 10.25 V26.75 L17 35 L2.5 26.75 V10.25 Z"
+        stroke="#0d1b34"
+        strokeWidth="1.5"
+        fill="white"
+      />
+      <path d="M17 2 L17 35" stroke="#0d1b34" strokeWidth="0.5" opacity="0.25" />
+      <path d="M2.5 10.25 L31.5 26.75" stroke="#0d1b34" strokeWidth="0.5" opacity="0.2" />
+      <path d="M31.5 10.25 L2.5 26.75" stroke="#0d1b34" strokeWidth="0.5" opacity="0.2" />
+      <text
+        x="17"
+        y="22"
+        textAnchor="middle"
+        fill="#0d1b34"
+        fontSize="13"
+        fontWeight="700"
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+      >
+        {step}
+      </text>
+    </svg>
+  );
+}
+
+function CardHeader({
+  step,
+  title,
+  hint,
+}: {
+  step: number;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 mb-5">
+      <div className="flex items-center gap-3 min-w-0">
+        <FacetedHexagon step={step} />
+        <h2 className="text-base font-bold text-[#0d1b34] tracking-tight">{title}</h2>
+      </div>
+      <span className="text-xs text-[#2f4d7a]/70 shrink-0">{hint}</span>
+    </div>
+  );
 }
 
 export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
@@ -198,301 +244,322 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8" id="upload-form-container">
-      {/* Header section */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center gap-1.5 mb-4">
-          <span className="text-[10px] text-slate-400">Powered by</span>
-          <img src="/logo.png" alt="DiALOGA" className="h-8" />
-        </div>
-        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl leading-none">
-          DiALOGA Forms AI
-        </h1>
-        <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-          {language === 'en'
-            ? 'Convert unstructured Word, Excel, or text drafts into elegant, bilingual, print-optimized digital forms with automatic brand design adaptation.'
-            : 'Convierta borradores desestructurados de Word, Excel o texto en elegantes formularios digitales optimizados para impresión con adaptación automática de diseño de marca.'}
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-2xl border border-slate-150 shadow-xl shadow-slate-100/50">
-        {/* Language Selection — English toggle hidden — Spanish-only mode. Un-comment to re-enable bilingual UI. */}
-        {/* <div className="flex items-center justify-between border-b border-slate-100 pb-5">
-          <div className="flex items-center space-x-2">
-            <Languages className="w-5 h-5 text-slate-400" />
-            <span className="font-semibold text-slate-700">
-              {language === 'en' ? 'Application Language:' : 'Idioma de la aplicación:'}
-            </span>
-          </div>
-          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-            <button
-              type="button"
-              onClick={() => setLanguage('en')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                language === 'en' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              English
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('es')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                language === 'es' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Español
-            </button>
-          </div>
-        </div> */}
-
-        {/* 1. Main Draft Upload or Input */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-baseline">
-            <label className="block text-base font-bold text-slate-800">
-              1. {language === 'en' ? 'Form Draft Source' : 'Origen del Borrador del Formulario'}
-            </label>
-            <span className="text-xs text-slate-400">
-              {language === 'en' ? 'Support Word, Excel, PDF, CSV, TXT' : 'Soporta Word, Excel, PDF, CSV, TXT'}
-            </span>
-          </div>
-
-          {/* File Drag and Drop */}
-          <div
-            onDragOver={(e) => onDragOver(e, setIsDragDraft)}
-            onDragLeave={() => onDragLeave(setIsDragDraft)}
-            onDrop={(e) => onDrop(e, setIsDragDraft, (f) => setDraftFile(f), true)}
-            onClick={() => draftInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] ${
-              isDragDraft
-                ? 'border-blue-500 bg-blue-50/50'
-                : draftFile
-                ? 'border-emerald-500 bg-emerald-50/20'
-                : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50/50'
-            }`}
-          >
-            <input
-              type="file"
-              ref={draftInputRef}
-              onChange={handleDraftChange}
-              accept=".docx,.xlsx,.xls,.pdf,.txt,.csv"
-              className="hidden"
-            />
-            {draftFile ? (
-              <>
-                <div className="bg-emerald-100 p-3 rounded-full text-emerald-600 mb-2">
-                  <FileCode className="w-8 h-8" />
-                </div>
-                <p className="text-sm font-semibold text-slate-800 max-w-full truncate px-4">{draftFile.name}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  {(draftFile.size / 1024).toFixed(1)} KB • {language === 'en' ? 'Click to change' : 'Clic para cambiar'}
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="bg-slate-100 p-3 rounded-full text-slate-500 mb-2">
-                  <Upload className="w-8 h-8" />
-                </div>
-                <p className="text-sm font-semibold text-slate-700">
-                  {language === 'en' ? 'Drag & drop form draft' : 'Arrastre y suelte el borrador'}
-                </p>
-                <p className="text-xs text-slate-400 mt-1">
-                  {language === 'en' ? 'or click to browse from device' : 'o haga clic para buscar en su dispositivo'}
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Text Draft editor as backup */}
-          <div className="space-y-1">
-            <span className="text-xs font-medium text-slate-500 block">
-              {language === 'en' ? 'Draft Text Preview & Edit Area:' : 'Área de vista previa y edición de texto del borrador:'}
-            </span>
-            <textarea
-              value={textDraft}
-              onChange={(e) => {
-                setTextDraft(e.target.value);
-                setDraftFile(null); // Clear file if text is manually typed
-              }}
-              rows={6}
-              placeholder={
-                language === 'en'
-                  ? "Enter questions, field names, sections, options, or paste Excel columns/Word content here..."
-                  : "Ingrese preguntas, nombres de campos, secciones, opciones o pegue columnas de Excel/contenido de Word aquí..."
-              }
-              className="w-full text-sm font-mono p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all resize-y"
-            />
-          </div>
-        </div>
-
-        {/* 2. Style inheritance: Logo & Watermark */}
-        <div className="border-t border-slate-100 pt-6">
-          <label className="block text-base font-bold text-slate-800 mb-1">
-            2. {language === 'en' ? 'Brand Visual Assets' : 'Activos Visuales de Marca'}
-          </label>
-          <p className="text-xs text-slate-500 mb-4">
-            {language === 'en'
-              ? 'Our AI will scan your logo to extract its color palette and apply it cleanly to the form layout.'
-              : 'Nuestra IA escaneará su logotipo para extraer su paleta de colores y aplicarla limpiamente al diseño del formulario.'}
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Logo Upload */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-600 block">
-                {language === 'en' ? 'Company Brand Logo (Optional)' : 'Logotipo de Marca de la Empresa (Opcional)'}
-              </span>
-              <div
-                onDragOver={(e) => onDragOver(e, setIsDragLogo)}
-                onDragLeave={() => onDragLeave(setIsDragLogo)}
-                onDrop={(e) => onDrop(e, setIsDragLogo, setLogoFile)}
-                onClick={() => logoInputRef.current?.click()}
-                className={`border border-dashed rounded-xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[120px] ${
-                  isDragLogo
-                    ? 'border-blue-500 bg-blue-50/50'
-                    : logoFile
-                    ? 'border-emerald-500 bg-emerald-50/10'
-                    : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50/50'
-                }`}
-              >
-                <input
-                  type="file"
-                  ref={logoInputRef}
-                  onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                  className="hidden"
-                />
-                {logoFile ? (
-                  <>
-                    <ImageIcon className="w-6 h-6 text-emerald-500 mb-1" />
-                    <span className="text-xs font-semibold text-slate-800 truncate max-w-[200px]">{logoFile.name}</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">{language === 'en' ? 'Click to change' : 'Clic para cambiar'}</span>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="w-6 h-6 text-slate-400 mb-1" />
-                    <span className="text-xs font-medium text-slate-700">{language === 'en' ? 'Upload Logo' : 'Subir Logotipo'}</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, SVG</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Watermark Upload */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-600 block flex items-center">
-                {language === 'en' ? 'Custom Watermark (Optional)' : 'Marca de Agua Personalizada (Opcional)'}
-                <span className="ml-1 text-[10px] font-normal text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">
-                  {language === 'en' ? 'Fallback: Logo used' : 'Fallo: Se usa el Logo'}
-                </span>
-              </span>
-              <div
-                onDragOver={(e) => onDragOver(e, setIsDragWatermark)}
-                onDragLeave={() => onDragLeave(setIsDragWatermark)}
-                onDrop={(e) => onDrop(e, setIsDragWatermark, setWatermarkFile)}
-                onClick={() => watermarkInputRef.current?.click()}
-                className={`border border-dashed rounded-xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[120px] ${
-                  isDragWatermark
-                    ? 'border-blue-500 bg-blue-50/50'
-                    : watermarkFile
-                    ? 'border-emerald-500 bg-emerald-50/10'
-                    : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50/50'
-                }`}
-              >
-                <input
-                  type="file"
-                  ref={watermarkInputRef}
-                  onChange={(e) => setWatermarkFile(e.target.files?.[0] || null)}
-                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                  className="hidden"
-                />
-                {watermarkFile ? (
-                  <>
-                    <ImageIcon className="w-6 h-6 text-emerald-500 mb-1" />
-                    <span className="text-xs font-semibold text-slate-800 truncate max-w-[200px]">{watermarkFile.name}</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">{language === 'en' ? 'Click to change' : 'Clic para cambiar'}</span>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="w-6 h-6 text-slate-400 mb-1" />
-                    <span className="text-xs font-medium text-slate-700">{language === 'en' ? 'Upload Watermark' : 'Subir Marca de Agua'}</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, SVG</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Custom AI constraints / directions */}
-        <div className="border-t border-slate-100 pt-6 space-y-2">
-          <label className="block text-base font-bold text-slate-800">
-            3. {language === 'en' ? 'Custom Conversion Directives' : 'Directivas de Conversión Personalizadas'}
-          </label>
-          <p className="text-xs text-slate-500">
-            {language === 'en'
-              ? 'Tell the AI any specific styling rules, additional fields to inject, or formatting preferences.'
-              : 'Indique a la IA cualquier regla de estilo específica, campos adicionales a inyectar o preferencias de formato.'}
-          </p>
-          <input
-            type="text"
-            value={customPrompt}
-            onChange={(e) => setCustomPrompt(e.target.value)}
-            placeholder={
-              language === 'en'
-                ? "e.g., 'Make primary color emerald green', 'Add a multi-line terms and conditions section at the end', 'Keep it to exactly 1 page'"
-                : "ej., 'Haga que el color primario sea verde esmeralda', 'Agregue una sección de términos y condiciones al final', 'Manténgalo en exactamente 1 página'"
-            }
-            className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white transition-all"
+    <div className="min-h-screen bg-[#f7f8fb]" id="upload-form-container">
+      {/* Navy header band */}
+      <header className="relative w-full bg-[#0d1b34] py-4 overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: [
+              'repeating-linear-gradient(-52deg, transparent, transparent 14px, rgba(255,255,255,0.04) 14px, rgba(255,255,255,0.04) 15px)',
+              'repeating-linear-gradient(38deg, transparent, transparent 22px, rgba(255,255,255,0.025) 22px, rgba(255,255,255,0.025) 23px)',
+            ].join(', '),
+          }}
+        />
+        <div className="relative flex justify-center">
+          <img
+            src="/logo.png"
+            alt="DiALOGA"
+            className="h-[38px] w-auto brightness-0 invert"
           />
         </div>
+      </header>
 
-        {payloadError && (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800">
-            <p>{payloadError}</p>
-          </div>
-        )}
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        {/* Hero */}
+        <div className="text-center mb-10">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#3d7dca] mb-3">
+            {language === 'en' ? 'Intelligent form conversion' : 'Conversión inteligente de formularios'}
+          </p>
+          <h1 className="text-4xl font-bold text-[#0d1b34] tracking-tight sm:text-5xl leading-tight">
+            DiALOGA Forms AI
+          </h1>
+          <p className="mt-4 text-base sm:text-lg text-[#132542]/80 max-w-2xl mx-auto leading-relaxed">
+            {language === 'en'
+              ? 'Convert unstructured Word, Excel, or text drafts into elegant, bilingual, print-optimized digital forms with automatic brand design adaptation.'
+              : 'Convierta borradores desestructurados de Word, Excel o texto en elegantes formularios digitales optimizados para impresión con adaptación automática de diseño de marca.'}
+          </p>
+        </div>
 
-        {/* Submit action */}
-        <div className="border-t border-slate-100 pt-6 flex justify-end">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Language Selection — English toggle hidden — Spanish-only mode. Un-comment to re-enable bilingual UI. */}
+          {/* <div className="flex items-center justify-between border-b border-[#dde2ea] pb-5">
+            <div className="flex items-center space-x-2">
+              <Languages className="w-5 h-5 text-[#2f4d7a]/50" />
+              <span className="font-semibold text-[#132542]">
+                {language === 'en' ? 'Application Language:' : 'Idioma de la aplicación:'}
+              </span>
+            </div>
+            <div className="flex bg-[#f7f8fb] p-1 rounded-lg border border-[#dde2ea]">
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  language === 'en' ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-[#2f4d7a] hover:text-[#0d1b34]'
+                }`}
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('es')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  language === 'es' ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-[#2f4d7a] hover:text-[#0d1b34]'
+                }`}
+              >
+                Español
+              </button>
+            </div>
+          </div> */}
+
+          {/* 1. Draft source card */}
+          <section className="bg-white border border-[#dde2ea] rounded-[14px] p-6">
+            <CardHeader
+              step={1}
+              title={language === 'en' ? 'Form Draft Source' : 'Origen del Borrador del Formulario'}
+              hint={language === 'en' ? 'Word, Excel, PDF, CSV, TXT' : 'Word, Excel, PDF, CSV, TXT'}
+            />
+
+            <div
+              onDragOver={(e) => onDragOver(e, setIsDragDraft)}
+              onDragLeave={() => onDragLeave(setIsDragDraft)}
+              onDrop={(e) => onDrop(e, setIsDragDraft, (f) => setDraftFile(f), true)}
+              onClick={() => draftInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-[14px] p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] ${
+                isDragDraft
+                  ? 'border-[#3d7dca] bg-[#e8f0fa]'
+                  : draftFile
+                  ? 'border-[#3d7dca] bg-[#e8f0fa]/60'
+                  : 'border-[#dde2ea] hover:border-[#3d7dca] hover:bg-[#e8f0fa]/50'
+              }`}
+            >
+              <input
+                type="file"
+                ref={draftInputRef}
+                onChange={handleDraftChange}
+                accept=".docx,.xlsx,.xls,.pdf,.txt,.csv"
+                className="hidden"
+              />
+              {draftFile ? (
+                <>
+                  <div className="bg-[#e8f0fa] p-3 rounded-full text-[#3d7dca] mb-2">
+                    <FileCode className="w-8 h-8" />
+                  </div>
+                  <p className="text-sm font-semibold text-[#0d1b34] max-w-full truncate px-4">{draftFile.name}</p>
+                  <p className="text-xs text-[#2f4d7a]/70 mt-1">
+                    {(draftFile.size / 1024).toFixed(1)} KB • {language === 'en' ? 'Click to change' : 'Clic para cambiar'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="bg-[#f7f8fb] p-3 rounded-full text-[#2f4d7a] mb-2">
+                    <Upload className="w-8 h-8" />
+                  </div>
+                  <p className="text-sm font-semibold text-[#0d1b34]">
+                    {language === 'en' ? 'Drag & drop form draft' : 'Arrastre y suelte el borrador'}
+                  </p>
+                  <p className="text-xs text-[#2f4d7a]/60 mt-1">
+                    {language === 'en' ? 'or click to browse from device' : 'o haga clic para buscar en su dispositivo'}
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Text draft UI removed — upload-only. State/handler preserved for revival.
+            <div className="space-y-1 mt-4">
+              <span className="text-xs font-medium text-[#2f4d7a]/70 block">
+                {language === 'en' ? 'Draft Text Preview & Edit Area:' : 'Área de vista previa y edición de texto del borrador:'}
+              </span>
+              <textarea
+                value={textDraft}
+                onChange={(e) => {
+                  setTextDraft(e.target.value);
+                  setDraftFile(null);
+                }}
+                rows={6}
+                placeholder={
+                  language === 'en'
+                    ? "Enter questions, field names, sections, options, or paste Excel columns/Word content here..."
+                    : "Ingrese preguntas, nombres de campos, secciones, opciones o pegue columnas de Excel/contenido de Word aquí..."
+                }
+                className="w-full text-sm p-3 border border-[#dde2ea] rounded-[14px] focus:outline-none focus:ring-2 focus:ring-[#3d7dca]/30 bg-[#f7f8fb] focus:bg-white transition-all resize-y"
+              />
+            </div>
+            */}
+          </section>
+
+          {/* 2. Brand assets card */}
+          <section className="bg-white border border-[#dde2ea] rounded-[14px] p-6">
+            <CardHeader
+              step={2}
+              title={language === 'en' ? 'Brand Visual Assets' : 'Activos Visuales de Marca'}
+              hint={language === 'en' ? 'Optional' : 'Opcional'}
+            />
+            <p className="text-xs text-[#2f4d7a]/70 mb-5 -mt-2">
+              {language === 'en'
+                ? 'Our AI will scan your logo to extract its color palette and apply it cleanly to the form layout.'
+                : 'Nuestra IA escaneará su logotipo para extraer su paleta de colores y aplicarla limpiamente al diseño del formulario.'}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <span className="text-xs font-semibold text-[#132542] block">
+                  {language === 'en' ? 'Company Brand Logo' : 'Logotipo de Marca'}
+                </span>
+                <div
+                  onDragOver={(e) => onDragOver(e, setIsDragLogo)}
+                  onDragLeave={() => onDragLeave(setIsDragLogo)}
+                  onDrop={(e) => onDrop(e, setIsDragLogo, setLogoFile)}
+                  onClick={() => logoInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-[14px] p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[120px] ${
+                    isDragLogo
+                      ? 'border-[#3d7dca] bg-[#e8f0fa]'
+                      : logoFile
+                      ? 'border-[#3d7dca] bg-[#e8f0fa]/60'
+                      : 'border-[#dde2ea] hover:border-[#3d7dca] hover:bg-[#e8f0fa]/50'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    ref={logoInputRef}
+                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    className="hidden"
+                  />
+                  {logoFile ? (
+                    <>
+                      <ImageIcon className="w-6 h-6 text-[#3d7dca] mb-1" />
+                      <span className="text-xs font-semibold text-[#0d1b34] truncate max-w-[200px]">{logoFile.name}</span>
+                      <span className="text-[10px] text-[#2f4d7a]/60 mt-0.5">
+                        {language === 'en' ? 'Click to change' : 'Clic para cambiar'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-6 h-6 text-[#2f4d7a]/50 mb-1" />
+                      <span className="text-xs font-medium text-[#0d1b34]">
+                        {language === 'en' ? 'Upload Logo' : 'Subir Logotipo'}
+                      </span>
+                      <span className="text-[10px] text-[#2f4d7a]/60 mt-0.5">PNG, JPG, SVG</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-semibold text-[#132542] block flex items-center flex-wrap gap-1.5">
+                  {language === 'en' ? 'Custom Watermark' : 'Marca de Agua Personalizada'}
+                  <span className="text-[10px] font-medium text-[#3d7dca] bg-[#e8f0fa] px-1.5 py-0.5 rounded">
+                    {language === 'en' ? 'Fallback: Logo used' : 'Fallo: Se usa el Logo'}
+                  </span>
+                </span>
+                <div
+                  onDragOver={(e) => onDragOver(e, setIsDragWatermark)}
+                  onDragLeave={() => onDragLeave(setIsDragWatermark)}
+                  onDrop={(e) => onDrop(e, setIsDragWatermark, setWatermarkFile)}
+                  onClick={() => watermarkInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-[14px] p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[120px] ${
+                    isDragWatermark
+                      ? 'border-[#3d7dca] bg-[#e8f0fa]'
+                      : watermarkFile
+                      ? 'border-[#3d7dca] bg-[#e8f0fa]/60'
+                      : 'border-[#dde2ea] hover:border-[#3d7dca] hover:bg-[#e8f0fa]/50'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    ref={watermarkInputRef}
+                    onChange={(e) => setWatermarkFile(e.target.files?.[0] || null)}
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    className="hidden"
+                  />
+                  {watermarkFile ? (
+                    <>
+                      <ImageIcon className="w-6 h-6 text-[#3d7dca] mb-1" />
+                      <span className="text-xs font-semibold text-[#0d1b34] truncate max-w-[200px]">{watermarkFile.name}</span>
+                      <span className="text-[10px] text-[#2f4d7a]/60 mt-0.5">
+                        {language === 'en' ? 'Click to change' : 'Clic para cambiar'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-6 h-6 text-[#2f4d7a]/50 mb-1" />
+                      <span className="text-xs font-medium text-[#0d1b34]">
+                        {language === 'en' ? 'Upload Watermark' : 'Subir Marca de Agua'}
+                      </span>
+                      <span className="text-[10px] text-[#2f4d7a]/60 mt-0.5">PNG, JPG, SVG</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 3. Directives card */}
+          <section className="bg-white border border-[#dde2ea] rounded-[14px] p-6">
+            <CardHeader
+              step={3}
+              title={language === 'en' ? 'Custom Conversion Directives' : 'Directivas de Conversión Personalizadas'}
+              hint={language === 'en' ? 'Optional' : 'Opcional'}
+            />
+            <p className="text-xs text-[#2f4d7a]/70 mb-4 -mt-2">
+              {language === 'en'
+                ? 'Tell the AI any specific styling rules, additional fields to inject, or formatting preferences.'
+                : 'Indique a la IA cualquier regla de estilo específica, campos adicionales a inyectar o preferencias de formato.'}
+            </p>
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              rows={3}
+              placeholder={
+                language === 'en'
+                  ? "e.g., 'Make primary color emerald green', 'Add a multi-line terms and conditions section at the end', 'Keep it to exactly 1 page'"
+                  : "ej., 'Haga que el color primario sea verde esmeralda', 'Agregue una sección de términos y condiciones al final', 'Manténgalo en exactamente 1 página'"
+              }
+              className="w-full text-sm p-3 border border-[#dde2ea] rounded-[14px] focus:outline-none focus:ring-2 focus:ring-[#3d7dca]/30 focus:border-[#3d7dca] bg-[#f7f8fb] focus:bg-white transition-all resize-y text-[#0d1b34] placeholder:text-[#2f4d7a]/40"
+            />
+          </section>
+
+          {payloadError && (
+            <div className="rounded-[14px] border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+              <p>{payloadError}</p>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isLoading || (!draftFile && !textDraft.trim())}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3.5 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:shadow-none transition-all duration-150 cursor-pointer text-base hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full bg-[#0d1b34] hover:bg-[#1c3358] text-white font-bold px-8 py-3.5 rounded-[14px] flex items-center justify-center gap-2 disabled:opacity-50 transition-colors duration-150 cursor-pointer text-base"
             id="convert-button"
           >
             {isLoading ? (
               <>
-                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                <RefreshCw className="w-5 h-5 animate-spin" />
                 <span>{language === 'en' ? 'Processing your form...' : 'Procesando su formulario...'}</span>
               </>
             ) : (
-              <>
-                <Sparkles className="w-5 h-5 text-blue-200" />
-                <span>{language === 'en' ? 'Generate Bilingual Webform' : 'Generar Formulario'}</span>
-              </>
+              <span>{language === 'en' ? 'Generate Bilingual Webform' : 'Generar Formulario'}</span>
             )}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
 
-      {/* Loading state overlays/cards with fun status lines */}
       <AnimatePresence>
         {isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-[#0d1b34]/75 backdrop-blur-md z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 text-center"
+              className="bg-white p-8 rounded-[14px] max-w-md w-full shadow-2xl border border-[#dde2ea] text-center"
             >
               <div className="relative inline-block mb-6">
-                <div className="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center border-4 border-blue-100 mx-auto animate-pulse">
+                <div className="w-24 h-24 rounded-full bg-[#e8f0fa] flex items-center justify-center border-4 border-[#dde2ea] mx-auto animate-pulse">
                   <img
                     src="/favicon.png"
                     alt="DiALOGA"
@@ -501,15 +568,14 @@ export default function UploadForm({ onConvert, isLoading }: UploadFormProps) {
                   />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">
+              <h3 className="text-xl font-bold text-[#0d1b34] mb-2">
                 {language === 'en' ? 'Conversion In Progress' : 'Conversión en Progreso'}
               </h3>
-              <p className="text-sm text-slate-500 mb-6">
+              <p className="text-sm text-[#2f4d7a]/80">
                 {language === 'en'
                   ? 'Reading your draft, extracting sections, optimizing layout, matching your logo colors, and building a fully translated bilingual form.'
                   : 'Leyendo su borrador, extrayendo secciones, optimizando el diseño, haciendo coincidir los colores de su logotipo y creando su formulario.'}
               </p>
-
             </motion.div>
           </motion.div>
         )}
