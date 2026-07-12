@@ -265,10 +265,10 @@ export async function convertForm(input: ConvertInput): Promise<ConvertResult> {
   }
 
   const systemInstruction = `You are an expert full-stack developer and UX/UI brand designer specializing in print-ready, high-fidelity corporate, medical, and administrative forms.
-Your goal is to parse form drafts (which can be unstructured documents, spreadsheets, lists, or tables) and convert them into a structured, Spanish-only JSON representation of a beautifully styled webform.
+Your goal is to transcribe the draft's content exactly and apply expert visual styling. Parse form drafts (which can be unstructured documents, spreadsheets, lists, or tables) and convert them into a structured, Spanish-only JSON representation of a beautifully styled webform. Your design expertise applies ONLY to visual presentation (theme, layout, grid) — NEVER to content.
 
 CRITICAL DESIGN & CONTENT RULES:
-1. 100% CONTENT FIDELITY (NON-NEGOTIABLE): You must respect 100% of the draft content. You are strictly forbidden from omitting, dropping, summarizing, grouping, or combining different fields, options, or questions from the draft. Every single question, field, description, declaration, list of required documents or attachments, checklist, option, instruction block, note, or signature block in the draft must be fully represented. Even small, short, or auxiliary text fields and checkboxes must be preserved. Complete content integrity is non-negotiable.
+1. 100% CONTENT FIDELITY — BOTH DIRECTIONS (NON-NEGOTIABLE): The output must contain EXACTLY the content of the draft — nothing omitted AND nothing added. You are strictly forbidden from omitting, dropping, summarizing, grouping, or combining different fields, options, or questions from the draft. You are also strictly forbidden from ADDING, inventing, inferring, or supplementing any field, question, option, section, or text that is not explicitly present in the source draft. Do NOT add fields that "would make sense" for this type of form. Do NOT complete the form toward a typical or ideal version. If the draft has 8 fields, the output has exactly those 8 fields — no more. Transcribe, do not design content. The ONLY things you generate are: the visual theme/styling and the Spanish translation of existing text. ALL content (fields, labels, options, sections, instructions) must come verbatim from the draft. Every single question, field, description, declaration, list of required documents or attachments, checklist, option, instruction block, note, or signature block in the draft must be fully represented — and nothing beyond them. Even small, short, or auxiliary text fields and checkboxes must be preserved. Complete content integrity is non-negotiable.
 2. SPANISH-ONLY TEXT: Every field label, section title, description, placeholder, and option MUST be written in Spanish. If the source draft is in another language, translate it professionally into Spanish. Use high-quality, natural Spanish terminology.
 3. LAYOUT & GRID ARRANGEMENT: Use the 'gridWidth' field (values 1-12) to place fields side-by-side cleanly and professionally.
    - Fields like 'First Name' & 'Last Name' should have gridWidth: 6.
@@ -293,15 +293,18 @@ CRITICAL DESIGN & CONTENT RULES:
    - Use 'signature' for signature blocks (always provide name, signature, and date). Place signature blocks at the very bottom of the last page.
    - Use 'grid' for matrices of radio buttons or checkboxes (like ratings or multi-question reviews).
 7. WATERMARK OPACITY: Set 'watermarkOpacity' to a safe, subtle level (e.g., 0.05) so it is visible but does not interfere with the readability of text.
-8. REQUIRED DOCUMENTS & ATTACHMENTS CHECKLISTS: If the form contains a list of required documents to attach or checklist of items, do NOT omit them. Represent them as interactive 'checkbox' fields so users can tick them as they provide the files (e.g., in a dedicated section named "Documentos Requeridos" or "Adjuntos").`;
+8. REQUIRED DOCUMENTS & ATTACHMENTS CHECKLISTS: If the form contains a list of required documents to attach or checklist of items, do NOT omit them. Represent them as interactive 'checkbox' fields so users can tick them as they provide the files (e.g., in a dedicated section named "Documentos Requeridos" or "Adjuntos").
+9. VERBATIM TRANSCRIPTION: Treat this as a transcription task, not a design task. Every label, option, and text block must match the draft's actual wording (translated to Spanish). Do not paraphrase, expand, "improve," or elaborate on the draft's wording. Do not invent placeholder text, help text, or descriptions that aren't in the draft.`;
 
-  const userPromptText = `Please convert this form draft into a beautifully structured, Spanish-only webform.
+  const userPromptText = `Please transcribe this form draft exactly and convert it into a beautifully structured, Spanish-only webform. Apply expert visual styling only — do not add, invent, or embellish any content.
 ${customPrompt ? `ADDITIONAL USER INSTRUCTIONS: ${customPrompt}` : ''}
 ${logoFile ? 'The brand logo is attached. Make sure to extract its dominant colors and style for the theme.' : "No logo was attached, so please generate a premium, high-contrast, modern professional color theme appropriate for this form's context."}
 The primary language of the input draft is "${userLanguage}". Produce all user-facing text in Spanish (translate from the source language if needed).
 IMPORTANT MANDATES FOR 100% RECALL AND COMPLETENESS:
-- You MUST capture, transcribe, and represent 100% of the questions, fields, checkboxes, options, list items, and text blocks in the draft.
+- Output ONLY content that appears in this specific draft. Do not add fields, options, or text from your general knowledge of what this form type usually contains.
+- You MUST capture, transcribe, and represent 100% of the questions, fields, checkboxes, options, list items, and text blocks in the draft — and nothing beyond them.
 - Do NOT consolidate, summarize, simplify, drop, or omit ANY part of the draft. Each item should be preserved in its full, exact context.
+- Do NOT add, invent, infer, or supplement any field, question, option, section, or text not explicitly present in the draft.
 - This includes final notes, instruction blocks, lists of required documents, checklists of attachments, declarations, informational text, and disclaimers.
 - If there is a list of required documents to attach, model them as individual, interactive 'checkbox' fields so the user can check them off inside the form.
 - While you should use 'gridWidth' to align fields side-by-side beautifully, page count limits are completely flexible. Do NOT drop or merge any fields to save pages; let the form span as many pages as naturally needed for absolute, perfect, 100% accuracy.`;
@@ -488,7 +491,7 @@ IMPORTANT MANDATES FOR 100% RECALL AND COMPLETENESS:
         });
       }
 
-      const auditorPromptText = `You are a strict QA (Quality Assurance) Completeness Inspector.
+      const auditorPromptText = `You are a strict QA (Quality Assurance) Fidelity Inspector.
 Compare the original draft (provided above) with the initial generated JSON form below.
 
 Initial Generated JSON Form:
@@ -496,18 +499,19 @@ Initial Generated JSON Form:
 ${JSON.stringify(formJson, null, 2)}
 \`\`\`
 
-YOUR TASK IS TO PERFECT THIS FORM BY RESOLVING ALL ISSUES AND OMISSIONS.
+YOUR TASK IS TO PERFECT THIS FORM BY RESOLVING ALL ISSUES — both omissions AND unauthorized additions. The output must match the draft EXACTLY.
 
-RIGOROUS RULES FOR 100% COMPLETENESS:
+RIGOROUS RULES FOR 100% FIDELITY:
 1. NO OMISSION ALLOWED: You are strictly forbidden from omitting, dropping, summarizing, grouping, or combining any fields, options, or questions from the draft. Every single question, field, description, declaration, list of required documents or attachments, checklist, option, instruction block, note, or signature block in the draft must be fully represented.
-2. DISCOVER MISSING FIELDS: Find every field, checkbox, text label, note, instruction, disclaimer, attachment requirement, or section that was in the draft but is missing or combined in the initial JSON.
-3. PREVENT TRUNCATION: Make sure all sections of the form (especially middle and end sections like Required Documents, Attachments, Notes, Agreements, Disclaimers, and Signatures) are completely included as distinct fields.
-4. REPRESENT REQUIRED DOCUMENTS: If the form draft lists documents that must be attached (e.g. ID, Proof of Residence, Medical Records), model them as individual, interactive 'checkbox' fields under a distinct section named "Documentos Requeridos" or "Adjuntos" so the user can tick them off.
-5. KEEP THE VALID WORK: Keep all the fields, styles, and options that were already correctly generated in the initial JSON. Do not destroy or degrade existing valid form structure; only expand, enrich, and correct any missing parts.
-6. SPANISH-ONLY TEXT: For any newly added or corrected field, section, or option, write all user-facing text in Spanish.
-${customPrompt ? `7. RESPECT ADDITIONAL USER INSTRUCTIONS: Make sure you also implement these custom rules: "${customPrompt}"` : ''}
+2. NO ADDITION ALLOWED: Also verify that NO field, option, section, or text was ADDED that is not in the original draft. If you find invented/embellished content not present in the source, REMOVE it. Do not add anything yourself — do not "complete" the form or add fields that seem typical for this form type. Your job is to make the output match the draft EXACTLY, both by restoring omissions and by removing additions.
+3. DISCOVER MISSING FIELDS: Find every field, checkbox, text label, note, instruction, disclaimer, attachment requirement, or section that was in the draft but is missing or combined in the initial JSON.
+4. PREVENT TRUNCATION: Make sure all sections of the form (especially middle and end sections like Required Documents, Attachments, Notes, Agreements, Disclaimers, and Signatures) are completely included as distinct fields.
+5. REPRESENT REQUIRED DOCUMENTS: If the form draft lists documents that must be attached (e.g. ID, Proof of Residence, Medical Records), model them as individual, interactive 'checkbox' fields under a distinct section named "Documentos Requeridos" or "Adjuntos" so the user can tick them off.
+6. KEEP THE VALID WORK: Keep all the fields, styles, and options that were already correctly generated in the initial JSON and match the draft. Do not destroy or degrade existing valid form structure; only restore missing parts and remove anything not present in the draft.
+7. SPANISH-ONLY TEXT: For any corrected field, section, or option, write all user-facing text in Spanish.
+${customPrompt ? `8. RESPECT ADDITIONAL USER INSTRUCTIONS: Make sure you also implement these custom rules: "${customPrompt}"` : ''}
 
-Output the final, perfected, 100% complete form JSON according to the schema.`;
+Output the final, perfected, 100% faithful form JSON according to the schema.`;
 
       const auditorContents = [...draftContents, { text: auditorPromptText }];
 
@@ -515,7 +519,7 @@ Output the final, perfected, 100% complete form JSON according to the schema.`;
       const auditResponse = await generateContentWithRetry(
         ai,
         auditorContents,
-        'You are a strict, professional Quality Assurance Auditor for digital form designs. Your primary metric is 100% data recall, completeness, and Spanish-language fidelity.',
+        'You are a strict QA Fidelity Inspector for digital form designs. Your primary metric is exact draft fidelity — restore omissions, remove unauthorized additions, and match the source exactly, with all user-facing text in Spanish.',
         responseSchema
       );
 
