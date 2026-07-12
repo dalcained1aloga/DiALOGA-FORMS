@@ -125,7 +125,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
   const updateFormTitle = (val: string, lang: 'en' | 'es') => {
     setForm(prev => ({
       ...prev,
-      formTitle: { ...prev.formTitle, [lang]: val }
+      formTitle: lang === 'es'
+        ? { ...prev.formTitle, en: val, es: val }
+        : { ...prev.formTitle, [lang]: val }
     }));
   };
 
@@ -151,7 +153,12 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
         ...page,
         sections: page.sections.map(sec => {
           if (sec.id === sectionId) {
-            return { ...sec, sectionTitle: { ...sec.sectionTitle, [lang]: val } };
+            return {
+              ...sec,
+              sectionTitle: lang === 'es'
+                ? { ...sec.sectionTitle, en: val, es: val }
+                : { ...sec.sectionTitle, [lang]: val }
+            };
           }
           return sec;
         })
@@ -168,9 +175,13 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
           if (sec.id === sectionId) {
             return {
               ...sec,
-              sectionDescription: sec.sectionDescription
-                ? { ...sec.sectionDescription, [lang]: val }
-                : { en: lang === 'en' ? val : '', es: lang === 'es' ? val : '' }
+              sectionDescription: lang === 'es'
+                ? sec.sectionDescription
+                  ? { ...sec.sectionDescription, en: val, es: val }
+                  : { en: val, es: val }
+                : sec.sectionDescription
+                  ? { ...sec.sectionDescription, [lang]: val }
+                  : { en: val, es: '' }
             };
           }
           return sec;
@@ -188,7 +199,12 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
           ...sec,
           fields: sec.fields.map(field => {
             if (field.id === fieldId) {
-              return { ...field, label: { ...field.label, [lang]: val } };
+              return {
+                ...field,
+                label: lang === 'es'
+                  ? { ...field.label, en: val, es: val }
+                  : { ...field.label, [lang]: val }
+              };
             }
             return field;
           })
@@ -208,9 +224,13 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             if (field.id === fieldId) {
               return {
                 ...field,
-                placeholder: field.placeholder
-                  ? { ...field.placeholder, [lang]: val }
-                  : { en: lang === 'en' ? val : '', es: lang === 'es' ? val : '' }
+                placeholder: lang === 'es'
+                  ? field.placeholder
+                    ? { ...field.placeholder, en: val, es: val }
+                    : { en: val, es: val }
+                  : field.placeholder
+                    ? { ...field.placeholder, [lang]: val }
+                    : { en: val, es: '' }
               };
             }
             return field;
@@ -1193,7 +1213,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                     {appLang === 'en' ? 'Global Title Settings' : 'Configuración de Título Global'}
                   </span>
                   <div className="space-y-2">
-                    <div>
+                    {/* EN input hidden — Spanish-only mode. Un-comment to re-enable bilingual editing. */}
+                    {/* <div>
                       <span className="text-[10px] font-bold text-slate-400 block">TITLE (EN)</span>
                       <input 
                         type="text" 
@@ -1201,9 +1222,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         onChange={(e) => updateFormTitle(e.target.value, 'en')}
                         className="w-full text-xs p-2 border border-slate-200 bg-white rounded"
                       />
-                    </div>
+                    </div> */}
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 block">TÍTULO (ES)</span>
+                      <span className="text-[10px] font-bold text-slate-400 block">TÍTULO</span>
                       <input 
                         type="text" 
                         value={form.formTitle.es}
@@ -1291,8 +1312,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                    <div>
+                      {/* EN input hidden — Spanish-only mode. Un-comment to re-enable bilingual editing. */}
+                      {/* <div>
                         <span className="text-[10px] font-bold text-slate-400 block">TITLE (EN)</span>
                         <input 
                           type="text" 
@@ -1300,9 +1322,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                           onChange={(e) => updateSectionTitle(activeSection.id, e.target.value, 'en')}
                           className="w-full text-xs p-2 border border-slate-200 rounded"
                         />
-                      </div>
+                      </div> */}
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 block">TÍTULO (ES)</span>
+                        <span className="text-[10px] font-bold text-slate-400 block">TÍTULO</span>
                         <input 
                           type="text" 
                           value={activeSection.sectionTitle.es}
@@ -1364,9 +1386,10 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       </button>
                     </div>
 
-                    {/* Field Labels (Bilingual) */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                    {/* Field Labels */}
+                    <div>
+                      {/* EN input hidden — Spanish-only mode. Un-comment to re-enable bilingual editing. */}
+                      {/* <div>
                         <span className="text-[10px] font-bold text-slate-400 block">QUESTION LABEL (EN)</span>
                         <input 
                           type="text" 
@@ -1374,9 +1397,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                           onChange={(e) => updateFieldLabel(activeField.id, e.target.value, 'en')}
                           className="w-full text-xs p-2 border border-slate-200 bg-white rounded"
                         />
-                      </div>
+                      </div> */}
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 block">ETIQUETA (ES)</span>
+                        <span className="text-[10px] font-bold text-slate-400 block">ETIQUETA</span>
                         <input 
                           type="text" 
                           value={activeField.label.es}
@@ -1386,9 +1409,10 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       </div>
                     </div>
 
-                    {/* Field Placeholders (Bilingual) */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                    {/* Field Placeholders */}
+                    <div>
+                      {/* EN input hidden — Spanish-only mode. Un-comment to re-enable bilingual editing. */}
+                      {/* <div>
                         <span className="text-[10px] font-bold text-slate-400 block">PLACEHOLDER (EN)</span>
                         <input 
                           type="text" 
@@ -1396,9 +1420,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                           onChange={(e) => updateFieldPlaceholder(activeField.id, e.target.value, 'en')}
                           className="w-full text-xs p-2 border border-slate-200 bg-white rounded"
                         />
-                      </div>
+                      </div> */}
                       <div>
-                        <span className="text-[10px] font-bold text-slate-400 block">RESERVA (ES)</span>
+                        <span className="text-[10px] font-bold text-slate-400 block">RESERVA / PLACEHOLDER</span>
                         <input 
                           type="text" 
                           value={activeField.placeholder?.es || ''}
