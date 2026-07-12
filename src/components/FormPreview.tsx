@@ -28,9 +28,11 @@ import {
   Type as FontIcon,
   Palette,
   Layout,
-  HelpCircle
+  HelpCircle,
+  Download
 } from 'lucide-react';
 import { DEFAULT_LOGO_SVG, DEFAULT_WATERMARK_SVG } from '../constants';
+import { exportToHtml, sanitizeExportFilename } from '../exportToHtml';
 
 interface FormPreviewProps {
   initialForm: ConvertedForm;
@@ -85,6 +87,17 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
   // Handle printing
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleExportHtml = () => {
+    const title = t(form.formTitle, formLang);
+    exportToHtml({
+      title,
+      filename: sanitizeExportFilename(form.formCode || title),
+      watermarkUrl: watermark,
+      watermarkOpacity: theme.watermarkOpacity,
+      watermarkStyle: theme.watermarkStyle || 'centered',
+    });
   };
 
   // Helper to translate text dynamically
@@ -1587,6 +1600,35 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         </div>
                       </label>
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={handlePrint}
+                      className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>{appLang === 'en' ? 'Print' : 'Imprimir'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePrint}
+                      title={appLang === 'en' ? 'Save as PDF via print dialog' : 'Guardar como PDF mediante el diálogo de impresión'}
+                      className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm shadow-indigo-100"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+                      <span>{appLang === 'en' ? 'Export PDF' : 'Exportar PDF'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportHtml}
+                      title={appLang === 'en' ? 'Download a self-contained fillable HTML file' : 'Descargar un archivo HTML rellenable y autocontenido'}
+                      className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm shadow-emerald-100"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-200" />
+                      <span>{appLang === 'en' ? 'Export HTML' : 'Exportar HTML'}</span>
+                    </button>
                   </div>
                 </div>
 
