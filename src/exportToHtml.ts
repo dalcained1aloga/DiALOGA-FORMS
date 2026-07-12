@@ -152,6 +152,16 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/** Prevent `"` inside a CSS value from terminating a style="..." attribute when serialized. */
+function escapeStyleValue(value: string): string {
+  return value.replace(/"/g, "'");
+}
+
+function cssUrlValue(url: string): string {
+  const escaped = url.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return `"${escaped}"`;
+}
+
 export function sanitizeExportFilename(name: string): string {
   const sanitized = name
     .trim()
@@ -232,17 +242,7 @@ function buildInlineStyle(
       continue;
     }
 
-    parts.push(`${prop}:${value}`);
-  }
-
-  for (let i = 0; i < computed.length; i++) {
-    const prop = computed[i];
-    if (prop.startsWith('--')) {
-      const value = computed.getPropertyValue(prop);
-      if (value) {
-        parts.push(`${prop}:${value}`);
-      }
-    }
+    parts.push(`${prop}:${escapeStyleValue(value)}`);
   }
 
   return parts.join(';');
@@ -381,12 +381,16 @@ function buildWatermarkMarkup(
   watermarkOpacity: number,
   watermarkStyle: 'tiled' | 'centered',
 ): string {
-  const modifierClass =
+  const div = document.createElement('div');
+  div.setAttribute('aria-hidden', 'true');
+  div.className = `print-watermark-layer ${
     watermarkStyle === 'tiled'
       ? 'print-watermark-layer--tiled'
-      : 'print-watermark-layer--centered';
-
-  return `<div aria-hidden="true" class="print-watermark-layer ${modifierClass}" style="--watermark-url:url(${watermarkUrl});--watermark-opacity:${watermarkOpacity}"></div>`;
+      : 'print-watermark-layer--centered'
+  }`;
+  div.style.setProperty('--watermark-url', `url(${cssUrlValue(watermarkUrl)})`);
+  div.style.setProperty('--watermark-opacity', String(watermarkOpacity));
+  return div.outerHTML;
 }
 
 function triggerDownload(html: string, filename: string): void {
