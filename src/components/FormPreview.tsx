@@ -22,7 +22,6 @@ import {
   ChevronDown,
   ArrowUp,
   ArrowDown,
-  Sparkles,
   RefreshCw,
   Sliders,
   Type as FontIcon,
@@ -39,6 +38,28 @@ interface FormPreviewProps {
   logoDataUrl: string;
   watermarkDataUrl: string;
   onBack: () => void;
+}
+
+function DialogaMark({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      aria-hidden="true"
+      className={`shrink-0 ${className}`}
+    >
+      <path d="M16 3 L27.5 11 V21 L16 29 L4.5 21 V11 Z" stroke="#0d1b34" strokeWidth="1.5" />
+      <path d="M16 3 L16 29" stroke="#0d1b34" strokeWidth="0.6" opacity="0.3" />
+      <path d="M4.5 11 L27.5 21" stroke="#0d1b34" strokeWidth="0.6" opacity="0.25" />
+      <path d="M27.5 11 L4.5 21" stroke="#0d1b34" strokeWidth="0.6" opacity="0.25" />
+      <path d="M16 3 L4.5 11 L16 16 L27.5 11 Z" stroke="#0d1b34" strokeWidth="0.6" opacity="0.35" />
+      <path d="M4.5 21 L16 29 L27.5 21 L16 16 Z" stroke="#0d1b34" strokeWidth="0.6" opacity="0.35" />
+      <path d="M4.5 11 L27.5 11" stroke="#0d1b34" strokeWidth="0.6" opacity="0.2" />
+      <path d="M4.5 21 L27.5 21" stroke="#0d1b34" strokeWidth="0.6" opacity="0.2" />
+    </svg>
+  );
 }
 
 export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl, onBack }: FormPreviewProps) {
@@ -658,7 +679,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
               type="checkbox"
               checked={showAnswers ? !!ansVal : false}
               onChange={(e) => handleAnswerChange(field.id, e.target.checked)}
-              className="w-3 h-3 rounded-sm text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+              className="w-3 h-3 rounded-sm text-[#3d7dca] focus:ring-[#3d7dca] cursor-pointer"
               style={{ accentColor: theme.primaryColor }}
             />
             <span className="text-[11px] text-slate-700 font-medium">
@@ -679,7 +700,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                   value={opt.value}
                   checked={showAnswers ? ansVal === opt.value : false}
                   onChange={() => handleAnswerChange(field.id, opt.value)}
-                  className="w-3 h-3 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  className="w-3 h-3 text-[#3d7dca] focus:ring-[#3d7dca] cursor-pointer"
                   style={{ accentColor: theme.primaryColor }}
                 />
                 <span>{t(opt.label, formLang)}</span>
@@ -693,7 +714,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
               style={{ borderColor: theme.primaryColor + '40' }}
             >
               {showAnswers && ansVal ? (
-                <span className="text-indigo-950 font-serif italic text-sm absolute bottom-0.5 left-1 transform rotate-[-1deg] select-none tracking-wider">
+                <span className="text-[#0d1b34] font-serif italic text-sm absolute bottom-0.5 left-1 transform rotate-[-1deg] select-none tracking-wider">
                   {ansVal}
                 </span>
               ) : (
@@ -886,22 +907,18 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
       `}} />
 
       {/* Control Navbar (Top navigation) - Screen only */}
-      <div id="control-navbar" className="w-full h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-40 print:hidden shadow-sm">
+      <div id="control-navbar" className="w-full h-16 bg-white border-b border-[#dde2ea] flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-40 print:hidden shadow-sm">
         <div className="flex items-center gap-4">
           <button 
             onClick={onBack}
-            className="flex items-center space-x-2 text-slate-600 hover:text-indigo-600 font-semibold text-xs transition-all hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg cursor-pointer"
+            className="flex items-center space-x-2 text-[#132542] hover:text-[#3d7dca] font-semibold text-xs transition-all hover:bg-[#e8f0fa] border border-[#dde2ea] px-3 py-1.5 rounded-[14px] cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{appLang === 'en' ? 'Back' : 'Volver'}</span>
           </button>
 
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-100">F</div>
-            <div>
-              <h1 className="text-sm font-bold leading-none text-slate-900">DiALOGA Forms</h1>
-              <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-0.5 font-bold">{appLang === 'en' ? 'Bilingual Form Engine' : 'Motor de Formularios'}</p>
-            </div>
+          <div className="hidden sm:flex items-center">
+            <DialogaMark />
           </div>
         </div>
 
@@ -911,7 +928,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             <button
               onClick={() => setAppLang('en')}
               className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
-                appLang === 'en' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'
+                appLang === 'en' ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-slate-500'
               }`}
             >
               EN
@@ -919,7 +936,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             <button
               onClick={() => setAppLang('es')}
               className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
-                appLang === 'es' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'
+                appLang === 'es' ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-slate-500'
               }`}
             >
               ES
@@ -929,7 +946,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+              className="px-4 py-2 bg-[#0d1b34] hover:bg-[#1c3358] text-white text-xs font-medium rounded-[14px] flex items-center gap-2 transition-colors cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>{appLang === 'en' ? 'Print / Printar' : 'Imprimir / Imprimir'}</span>
@@ -937,9 +954,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             <button
               onClick={handlePrint}
               title={appLang === 'en' ? 'Save as PDF via print dialog' : 'Guardar como PDF mediante el diálogo de impresión'}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-sm shadow-indigo-100"
+              className="px-4 py-2 bg-[#0d1b34] hover:bg-[#1c3358] text-white text-xs font-medium rounded-[14px] flex items-center gap-2 transition-colors cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+              <Download className="w-3.5 h-3.5" />
               <span>{appLang === 'en' ? 'Export PDF' : 'Exportar PDF'}</span>
             </button>
           </div>
@@ -950,15 +967,15 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
       <div className="w-full flex flex-col lg:flex-row pt-16 min-h-screen">
         
         {/* SIDEBAR: Configuration & Editor (Screen only) */}
-        <div id="print-sidebar" className="w-full lg:w-[420px] bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-64px)] fixed lg:sticky top-16 left-0 z-30 print:hidden overflow-y-auto">
+        <div id="print-sidebar" className="w-full lg:w-[420px] bg-white border-r border-[#dde2ea] flex flex-col h-[calc(100vh-64px)] fixed lg:sticky top-16 left-0 z-30 print:hidden overflow-y-auto">
           
           {/* Sidebar tabs */}
-          <div className="flex border-b border-slate-200 bg-slate-50/50">
+          <div className="flex border-b border-[#dde2ea] bg-[#f7f8fb]">
             <button
               onClick={() => setActiveTab('theme')}
               className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer ${
                 activeTab === 'theme' 
-                  ? 'border-indigo-600 text-indigo-600 bg-white' 
+                  ? 'border-[#3d7dca] text-[#0d1b34] bg-white' 
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -969,7 +986,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
               onClick={() => setActiveTab('sections')}
               className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer ${
                 activeTab === 'sections' 
-                  ? 'border-indigo-600 text-indigo-600 bg-white' 
+                  ? 'border-[#3d7dca] text-[#0d1b34] bg-white' 
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -980,7 +997,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
               onClick={() => setActiveTab('answers')}
               className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer ${
                 activeTab === 'answers' 
-                  ? 'border-indigo-600 text-indigo-600 bg-white' 
+                  ? 'border-[#3d7dca] text-[#0d1b34] bg-white' 
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -1000,7 +1017,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                   <label className="text-xs font-bold text-slate-400 uppercase mb-3 block">Draft Assets / Activos</label>
                   <div className="space-y-3">
                     <div className="p-3 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 flex items-center gap-3">
-                      <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 bg-[#e8f0fa] text-[#3d7dca] rounded flex items-center justify-center flex-shrink-0">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A1 1 0 0112 2.586L15.414 6A1 1 0 0116 6.586V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
                       </div>
                       <div className="overflow-hidden">
@@ -1008,13 +1025,13 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         <p className="text-[10px] text-slate-400 font-medium">{appLang === 'en' ? 'Imported • Ready' : 'Importado • Listo'}</p>
                       </div>
                     </div>
-                    <div className="p-3 border border-indigo-100 rounded-lg bg-indigo-50 flex items-center gap-3 animate-pulse">
-                      <div className="w-8 h-8 bg-indigo-500 text-white rounded flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-100">
+                    <div className="p-3 border border-[#dde2ea] rounded-[14px] bg-[#e8f0fa] flex items-center gap-3 animate-pulse">
+                      <div className="w-8 h-8 bg-[#3d7dca] text-white rounded flex items-center justify-center flex-shrink-0">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-xs font-semibold truncate text-indigo-900">{logoDataUrl ? 'brand_logo_active.png' : 'clinic_logo_default.png'}</p>
-                        <p className="text-[10px] text-indigo-500 font-bold">{appLang === 'en' ? 'Active Brand • Matches Theme' : 'Marca Activa • Combina Estilo'}</p>
+                        <p className="text-xs font-semibold truncate text-[#0d1b34]">{logoDataUrl ? 'brand_logo_active.png' : 'clinic_logo_default.png'}</p>
+                        <p className="text-[10px] text-[#3d7dca] font-bold">{appLang === 'en' ? 'Active Brand • Matches Theme' : 'Marca Activa • Combina Estilo'}</p>
                       </div>
                     </div>
                   </div>
@@ -1022,8 +1039,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
                 <div className="border-t border-slate-100 pt-5">
                   <label className="text-xs font-bold text-slate-400 uppercase mb-3 block">Form Styling / Estilo</label>
-                  <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider flex items-center">
-                    <Palette className="w-3.5 h-3.5 mr-2 text-indigo-500" />
+                  <h3 className="text-xs font-bold text-[#0d1b34] mb-3 uppercase tracking-wider flex items-center">
+                    <Palette className="w-3.5 h-3.5 mr-2 text-[#3d7dca]" />
                     {appLang === 'en' ? 'Color Scheme' : 'Esquema de Colores'}
                   </h3>
                   <div className="space-y-4">
@@ -1071,8 +1088,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
                 {/* Typography Settings */}
                 <div className="border-t border-slate-100 pt-5">
-                  <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider flex items-center">
-                    <FontIcon className="w-3.5 h-3.5 mr-2 text-indigo-500" />
+                  <h3 className="text-xs font-bold text-[#0d1b34] mb-3 uppercase tracking-wider flex items-center">
+                    <FontIcon className="w-3.5 h-3.5 mr-2 text-[#3d7dca]" />
                     {appLang === 'en' ? 'Typography & Border' : 'Tipografía y Bordes'}
                   </h3>
                   <div className="space-y-4">
@@ -1087,7 +1104,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                             onClick={() => handleColorChange('fontFamily', font)}
                             className={`py-1.5 px-3 rounded text-xs font-bold border capitalize transition-all cursor-pointer ${
                               theme.fontFamily === font 
-                                ? 'bg-indigo-50 border-indigo-400 text-indigo-700' 
+                                ? 'bg-[#e8f0fa] border-[#3d7dca] text-[#132542]' 
                                 : 'bg-white border-slate-200 hover:bg-slate-50'
                             }`}
                           >
@@ -1108,7 +1125,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                             onClick={() => handleColorChange('borderRadius', radius)}
                             className={`py-1.5 rounded text-xs font-bold border capitalize transition-all cursor-pointer ${
                               theme.borderRadius === radius 
-                                ? 'bg-indigo-50 border-indigo-400 text-indigo-700' 
+                                ? 'bg-[#e8f0fa] border-[#3d7dca] text-[#132542]' 
                                 : 'bg-white border-slate-200 hover:bg-slate-50'
                             }`}
                           >
@@ -1122,8 +1139,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
                 {/* Logo & Watermark parameters */}
                 <div className="border-t border-slate-100 pt-5">
-                  <h3 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider flex items-center">
-                    <Maximize className="w-3.5 h-3.5 mr-2 text-indigo-500" />
+                  <h3 className="text-xs font-bold text-[#0d1b34] mb-3 uppercase tracking-wider flex items-center">
+                    <Maximize className="w-3.5 h-3.5 mr-2 text-[#3d7dca]" />
                     {appLang === 'en' ? 'Watermark & Logo' : 'Marca de Agua y Logo'}
                   </h3>
                   <div className="space-y-4">
@@ -1140,7 +1157,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         step="0.01"
                         value={theme.watermarkOpacity}
                         onChange={(e) => handleColorChange('watermarkOpacity', parseFloat(e.target.value))}
-                        className="w-full accent-indigo-600"
+                        className="w-full accent-[#3d7dca]"
                       />
                     </div>
 
@@ -1155,7 +1172,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                           onClick={() => handleColorChange('watermarkStyle', 'centered')}
                           className={`py-1 px-2 text-xs font-bold border transition-all cursor-pointer rounded ${
                             (theme.watermarkStyle || 'centered') === 'centered'
-                              ? 'bg-indigo-50 border-indigo-400 text-indigo-700'
+                              ? 'bg-[#e8f0fa] border-[#3d7dca] text-[#132542]'
                               : 'bg-white border-slate-200 hover:bg-slate-50'
                           }`}
                         >
@@ -1166,7 +1183,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                           onClick={() => handleColorChange('watermarkStyle', 'tiled')}
                           className={`py-1 px-2 text-xs font-bold border transition-all cursor-pointer rounded ${
                             theme.watermarkStyle === 'tiled'
-                              ? 'bg-indigo-50 border-indigo-400 text-indigo-700'
+                              ? 'bg-[#e8f0fa] border-[#3d7dca] text-[#132542]'
                               : 'bg-white border-slate-200 hover:bg-slate-50'
                           }`}
                         >
@@ -1186,7 +1203,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                             onClick={() => handleColorChange('logoPosition', pos)}
                             className={`py-1 px-2.5 rounded text-xs font-bold border capitalize transition-all cursor-pointer ${
                               theme.logoPosition === pos 
-                                ? 'bg-indigo-50 border-indigo-400 text-indigo-700' 
+                                ? 'bg-[#e8f0fa] border-[#3d7dca] text-[#132542]' 
                                 : 'bg-white border-slate-200 hover:bg-slate-50'
                             }`}
                           >
@@ -1209,7 +1226,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         step="5"
                         value={theme.logoScale || 100}
                         onChange={(e) => handleColorChange('logoScale', parseInt(e.target.value))}
-                        className="w-full accent-indigo-600 cursor-pointer"
+                        className="w-full accent-[#3d7dca] cursor-pointer"
                       />
                     </div>
                   </div>
@@ -1261,7 +1278,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
                 {/* Section selection drop-down */}
                 <div className="space-y-1.5">
-                  <span className="text-xs font-bold text-slate-700 block">{appLang === 'en' ? 'Select Section to Edit:' : 'Seleccione Sección a Editar:'}</span>
+                  <span className="text-xs font-bold text-[#0d1b34] block">{appLang === 'en' ? 'Select Section to Edit:' : 'Seleccione Sección a Editar:'}</span>
                   <select
                     value={selectedSectionId}
                     onChange={(e) => {
@@ -1274,7 +1291,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         setSelectedFieldId('');
                       }
                     }}
-                    className="w-full text-xs p-2.5 border border-slate-250 bg-white rounded-lg focus:ring-1 focus:ring-blue-500"
+                    className="w-full text-xs p-2.5 border border-slate-250 bg-white rounded-lg focus:ring-1 focus:ring-[#3d7dca]"
                   >
                     {form.pages.map(page => (
                       <optgroup key={page.pageNumber} label={`${appLang === 'en' ? 'Page' : 'Página'} ${page.pageNumber}`}>
@@ -1350,13 +1367,13 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                     {/* Select field from current section to edit */}
                     <div className="space-y-1.5 border-t border-slate-100 pt-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-700 block">
+                        <span className="text-xs font-bold text-[#0d1b34] block">
                           {appLang === 'en' ? 'Section Fields/Questions:' : 'Campos/Preguntas de Sección:'}
                         </span>
                         <button
                           type="button"
                           onClick={() => addFieldToSection(activeSection.id)}
-                          className="bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 font-bold px-2 py-1 rounded text-[10px] flex items-center space-x-1 cursor-pointer"
+                          className="bg-[#e8f0fa] text-[#3d7dca] border border-[#dde2ea] hover:bg-[#e8f0fa] font-bold px-2 py-1 rounded text-[10px] flex items-center space-x-1 cursor-pointer"
                         >
                           <Plus className="w-3 h-3" />
                           <span>{appLang === 'en' ? 'Add Field' : 'Añadir Campo'}</span>
@@ -1369,7 +1386,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         <select
                           value={selectedFieldId}
                           onChange={(e) => setSelectedFieldId(e.target.value)}
-                          className="w-full text-xs p-2.5 border border-slate-250 bg-white rounded-lg focus:ring-1 focus:ring-indigo-500"
+                          className="w-full text-xs p-2.5 border border-slate-250 bg-white rounded-lg focus:ring-1 focus:ring-[#3d7dca]"
                         >
                           {activeSection.fields.map(field => (
                             <option key={field.id} value={field.id}>
@@ -1384,9 +1401,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
                 {/* Selected Field settings */}
                 {activeField && (
-                  <div className="space-y-4 border-t border-slate-150 pt-5 bg-indigo-50/20 p-4 rounded-xl border border-indigo-100/40">
+                  <div className="space-y-4 border-t border-slate-150 pt-5 bg-[#e8f0fa]/40 p-4 rounded-[14px] border border-[#dde2ea]">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-[#3d7dca] uppercase tracking-wider">
                         {appLang === 'en' ? 'Active Question Settings' : 'Ajustes de Pregunta Activa'}
                       </span>
                       <button
@@ -1474,7 +1491,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         <select
                           value={activeField.gridWidth}
                           onChange={(e) => updateFieldGridWidth(activeField.id, parseInt(e.target.value))}
-                          className="w-full text-xs p-2 border border-slate-200 bg-white rounded font-semibold text-indigo-600"
+                          className="w-full text-xs p-2 border border-slate-200 bg-white rounded font-semibold text-[#3d7dca]"
                         >
                           <option value={12}>12 ({appLang === 'en' ? 'Full Width' : 'Ancho Total'})</option>
                           <option value={8}>8 (2/3 Width)</option>
@@ -1492,7 +1509,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         id="field-required-checkbox"
                         checked={activeField.required}
                         onChange={(e) => updateFieldRequired(activeField.id, e.target.checked)}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        className="rounded text-[#3d7dca] focus:ring-[#3d7dca] cursor-pointer"
                       />
                       <label htmlFor="field-required-checkbox" className="text-xs font-semibold text-slate-600 cursor-pointer">
                         {appLang === 'en' ? 'Required field (Mandatory)' : 'Campo requerido (Obligatorio)'}
@@ -1518,7 +1535,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                     <button
                       type="button"
                       onClick={addPage}
-                      className="px-2.5 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold rounded flex items-center space-x-1 cursor-pointer"
+                      className="px-2.5 py-1.5 bg-[#e8f0fa] text-[#3d7dca] hover:bg-[#e8f0fa] border border-[#dde2ea] text-xs font-bold rounded flex items-center space-x-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>{appLang === 'en' ? 'Add Page' : 'Añadir'}</span>
@@ -1537,7 +1554,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                         key={p.pageNumber}
                         type="button"
                         onClick={() => addSectionToPage(p.pageNumber - 1)}
-                        className="bg-white border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-xs font-bold w-7 h-7 rounded flex items-center justify-center transition-all cursor-pointer"
+                        className="bg-white border border-slate-200 hover:border-[#3d7dca] hover:bg-[#e8f0fa]/50 text-xs font-bold w-7 h-7 rounded flex items-center justify-center transition-all cursor-pointer"
                         title={`${appLang === 'en' ? 'Add Section to Page' : 'Añadir sección a la página'} ${p.pageNumber}`}
                       >
                         {p.pageNumber}
@@ -1553,8 +1570,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
               <div className="space-y-6 animate-fade-in">
                 {/* Print parameters */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
-                    <Printer className="w-3.5 h-3.5 mr-2 text-indigo-500" />
+                  <h3 className="text-xs font-bold text-[#0d1b34] uppercase tracking-wider flex items-center">
+                    <Printer className="w-3.5 h-3.5 mr-2 text-[#3d7dca]" />
                     {appLang === 'en' ? 'Document Print Options' : 'Opciones de Impresión'}
                   </h3>
 
@@ -1570,10 +1587,10 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                           name="print-answers"
                           checked={printWithAnswers}
                           onChange={() => setPrintWithAnswers(true)}
-                          className="mt-0.5 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          className="mt-0.5 text-[#3d7dca] focus:ring-[#3d7dca] cursor-pointer"
                         />
                         <div>
-                          <span className="text-xs font-bold text-slate-700 block">
+                          <span className="text-xs font-bold text-[#0d1b34] block">
                             {appLang === 'en' ? 'Print FILLED Form (With Answers)' : 'Imprimir Formulario LLENO (Con Respuestas)'}
                           </span>
                           <span className="text-[10px] text-slate-500 block">
@@ -1588,10 +1605,10 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                           name="print-answers"
                           checked={!printWithAnswers}
                           onChange={() => setPrintWithAnswers(false)}
-                          className="mt-0.5 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          className="mt-0.5 text-[#3d7dca] focus:ring-[#3d7dca] cursor-pointer"
                         />
                         <div>
-                          <span className="text-xs font-bold text-slate-700 block">
+                          <span className="text-xs font-bold text-[#0d1b34] block">
                             {appLang === 'en' ? 'Print EMPTY Form (Blank Fields)' : 'Imprimir Formulario VACÍO (Campos Vacíos)'}
                           </span>
                           <span className="text-[10px] text-slate-500 block">
@@ -1606,7 +1623,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                     <button
                       type="button"
                       onClick={handlePrint}
-                      className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                      className="w-full px-4 py-2 bg-[#0d1b34] hover:bg-[#1c3358] text-white text-xs font-medium rounded-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       <span>{appLang === 'en' ? 'Print' : 'Imprimir'}</span>
@@ -1615,9 +1632,9 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       type="button"
                       onClick={handlePrint}
                       title={appLang === 'en' ? 'Save as PDF via print dialog' : 'Guardar como PDF mediante el diálogo de impresión'}
-                      className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm shadow-indigo-100"
+                      className="w-full px-4 py-2 bg-[#0d1b34] hover:bg-[#1c3358] text-white text-xs font-medium rounded-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+                      <Download className="w-3.5 h-3.5" />
                       <span>{appLang === 'en' ? 'Export PDF' : 'Exportar PDF'}</span>
                     </button>
                     <button
@@ -1634,8 +1651,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
                 {/* Page Layout Mode Toggle */}
                 <div className="border-t border-slate-100 pt-5 space-y-3">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
-                    <Layout className="w-3.5 h-3.5 mr-2 text-indigo-500" />
+                  <h3 className="text-xs font-bold text-[#0d1b34] uppercase tracking-wider flex items-center">
+                    <Layout className="w-3.5 h-3.5 mr-2 text-[#3d7dca]" />
                     {appLang === 'en' ? 'Page Layout Flow' : 'Flujo de Diseño de Páginas'}
                   </h3>
                   <p className="text-[11px] text-slate-500 leading-normal">
@@ -1648,7 +1665,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       type="button"
                       onClick={() => setContinuousFlow(true)}
                       className={`py-2 px-2.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                        continuousFlow ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        continuousFlow ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
                       {appLang === 'en' ? 'Continuous' : 'Continuo'}
@@ -1657,7 +1674,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       type="button"
                       onClick={() => setContinuousFlow(false)}
                       className={`py-2 px-2.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                        !continuousFlow ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        !continuousFlow ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
                       {appLang === 'en' ? 'Strict Pages' : 'Páginas Estrictas'}
@@ -1667,8 +1684,8 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
 
                 {/* Form Language Toggle — English toggle hidden — Spanish-only mode. Un-comment to re-enable bilingual UI. */}
                 {/* <div className="border-t border-slate-100 pt-5 space-y-3">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
-                    <Globe className="w-3.5 h-3.5 mr-2 text-indigo-500" />
+                  <h3 className="text-xs font-bold text-[#0d1b34] uppercase tracking-wider flex items-center">
+                    <Globe className="w-3.5 h-3.5 mr-2 text-[#3d7dca]" />
                     {appLang === 'en' ? 'Form Sheet Language' : 'Idioma de Hoja de Formulario'}
                   </h3>
                   <p className="text-[11px] text-slate-500 leading-normal">
@@ -1681,7 +1698,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       type="button"
                       onClick={() => setFormLang('en')}
                       className={`py-2 px-3 rounded text-xs font-bold transition-all cursor-pointer ${
-                        formLang === 'en' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        formLang === 'en' ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
                       English (EN)
@@ -1690,7 +1707,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                       type="button"
                       onClick={() => setFormLang('es')}
                       className={`py-2 px-3 rounded text-xs font-bold transition-all cursor-pointer ${
-                        formLang === 'es' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        formLang === 'es' ? 'bg-white text-[#3d7dca] shadow-sm' : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
                       Español (SP)
@@ -1712,13 +1729,13 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
             )}
 
             {/* Premium Bento Optimization Card (Dark and sleek!) */}
-            <div className="mt-6 p-4 bg-slate-900 rounded-xl text-white shadow-xl flex flex-col justify-between">
+            <div className="mt-6 p-4 bg-[#0d1b34] rounded-[14px] text-white shadow-xl flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-[9px] font-bold opacity-60 uppercase tracking-wider">{appLang === 'en' ? 'Layout Engine' : 'Motor de Diseño'}</p>
                   <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono font-bold px-1.5 py-0.5 rounded uppercase">{appLang === 'en' ? 'Optimized' : 'Optimizado'}</span>
                 </div>
-                <p className="text-xl font-light tracking-tight">{appLang === 'en' ? 'Compressed to' : 'Comprimido a'} <span className="font-extrabold text-indigo-400">{form.pages.length} {form.pages.length === 1 ? 'Page' : 'Pages'}</span></p>
+                <p className="text-xl font-light tracking-tight">{appLang === 'en' ? 'Compressed to' : 'Comprimido a'} <span className="font-extrabold text-[#3d7dca]">{form.pages.length} {form.pages.length === 1 ? 'Page' : 'Pages'}</span></p>
                 <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">{appLang === 'en' ? 'Applying high density grid layout variables automatically.' : 'Aplicando variables de cuadrícula de alta densidad automáticamente.'}</p>
               </div>
               <div className="mt-4 pt-3 border-t border-white/10 flex justify-between items-center text-[10px] font-mono text-slate-400">
@@ -1730,13 +1747,13 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
           </div>
 
           {/* Footer of Sidebar */}
-          <div className="p-4 bg-slate-50 border-t border-slate-200 text-center text-[10px] text-slate-500 font-medium">
+          <div className="p-4 bg-[#f7f8fb] border-t border-[#dde2ea] text-center text-[10px] text-[#2f4d7a]/70 font-medium">
             {appLang === 'en' ? 'Tip: Hit Ctrl+P (Cmd+P) to save directly as PDF.' : 'Sugerencia: Pulse Ctrl+P (Cmd+P) para guardar como PDF.'}
           </div>
         </div>
 
         {/* DOCUMENT: Interactive Form Sheets (Dual screen/print) */}
-        <div className="flex-grow flex flex-col items-center p-4 lg:p-8 bg-slate-100 print:bg-white overflow-y-auto min-h-screen">
+        <div className="flex-grow flex flex-col items-center p-4 lg:p-8 bg-[#f7f8fb] print:bg-white overflow-y-auto min-h-screen">
           
           <div className="w-full max-w-[800px] mb-4 print:hidden flex items-center justify-between text-xs text-slate-500 px-2">
             <span>
@@ -1744,8 +1761,7 @@ export default function FormPreview({ initialForm, logoDataUrl, watermarkDataUrl
                 ? `📄 Visualizing ${form.pages.length} Pages • Real-time Style Inherited` 
                 : `📄 Visualizando ${form.pages.length} Páginas • Estilo Inherente de Marca`}
             </span>
-            <span className="flex items-center text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-              <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-500 animate-pulse" />
+            <span className="flex items-center text-[#0d1b34] font-semibold bg-[#e8f0fa] px-2 py-0.5 rounded border border-[#dde2ea]">
               {formLang === 'en' ? 'Bilingual Form: English Rendering' : 'Formulario: Renderizado en Español'}
             </span>
           </div>
