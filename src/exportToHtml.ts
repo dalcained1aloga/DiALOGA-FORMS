@@ -107,10 +107,10 @@ const VISUAL_PROPERTIES = [
   'order',
   'float',
   'clear',
-  'visibility',
 ] as const;
 
 const SKIP_PROPERTIES = new Set([
+  'visibility',
   'cursor',
   'pointer-events',
   'user-select',
@@ -258,6 +258,7 @@ function applyRootFlowOverrides(el: HTMLElement): void {
     'overflow-x:visible',
     'overflow-y:visible',
     'justify-content:flex-start',
+    'visibility:visible',
   ].join(';');
   el.setAttribute('style', existing ? `${existing};${overrides}` : overrides);
 }
@@ -282,7 +283,7 @@ function createStagingStyles(): HTMLStyleElement {
       left: -10000px;
       top: 0;
       width: 8.5in;
-      visibility: hidden;
+      opacity: 0;
       pointer-events: none;
       z-index: -1;
     }
@@ -364,6 +365,7 @@ function buildExportedStyles(): string {
       max-height: none;
       overflow: visible;
       justify-content: flex-start;
+      visibility: visible;
     }
     .field-container {
       break-inside: avoid;
