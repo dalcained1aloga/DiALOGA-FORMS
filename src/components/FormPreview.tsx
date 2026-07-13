@@ -876,12 +876,11 @@ export default function FormPreview({
           .print-watermark-layer {
             display: block !important;
             position: fixed;
-            top: 0;
+            top: 1.4in;
             left: 0;
             right: 0;
             bottom: 0;
             width: 100%;
-            height: 100%;
             pointer-events: none;
             z-index: 0;
             opacity: var(--watermark-opacity);
