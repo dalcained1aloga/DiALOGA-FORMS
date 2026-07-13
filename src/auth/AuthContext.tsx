@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ALLOWED_EMAIL_SUFFIX, DOMAIN_RESTRICTED_MESSAGE } from './constants';
+import { DOMAIN_RESTRICTED_MESSAGE, isAllowedEmail } from './constants';
 import { decodeGoogleIdToken } from './decodeJwt';
 import { clearStoredSession, loadStoredSession, saveStoredSession } from './session';
 import type { AuthUser } from './types';
@@ -20,10 +20,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function isAllowedEmail(email: string): boolean {
-  return email.toLowerCase().endsWith(ALLOWED_EMAIL_SUFFIX);
-}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);

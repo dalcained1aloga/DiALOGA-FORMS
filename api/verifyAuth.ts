@@ -5,7 +5,26 @@
 
 import { OAuth2Client } from 'google-auth-library';
 
-const ALLOWED_EMAIL_SUFFIX = '@d1aloga.com';
+const DEFAULT_ALLOWED_DOMAINS = ['d1aloga.com'];
+
+function parseAllowedEmailDomains(raw: string | undefined): string[] {
+  const domains = (raw ?? 'd1aloga.com')
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  return domains.length > 0 ? domains : DEFAULT_ALLOWED_DOMAINS;
+}
+
+const ALLOWED_EMAIL_DOMAINS = parseAllowedEmailDomains(process.env.ALLOWED_EMAIL_DOMAINS);
+
+function isEmailDomainAllowed(email: string): boolean {
+  const atIndex = email.lastIndexOf('@');
+  if (atIndex < 0) {
+    return false;
+  }
+  const domain = email.slice(atIndex + 1).toLowerCase();
+  return ALLOWED_EMAIL_DOMAINS.includes(domain);
+}
 
 export interface VerifiedGoogleUser {
   email: string;
@@ -50,7 +69,7 @@ export async function verifyGoogleIdToken(
     }
 
     const email = payload.email.toLowerCase();
-    if (!email.endsWith(ALLOWED_EMAIL_SUFFIX)) {
+    if (!isEmailDomainAllowed(email)) {
       return null;
     }
 
@@ -67,8 +86,12 @@ export async function verifyGoogleIdToken(
 }
 
 export function unauthorizedResponse() {
+  const domainHint =
+    ALLOWED_EMAIL_DOMAINS.length === 1
+      ? `@${ALLOWED_EMAIL_DOMAINS[0]}`
+      : 'an authorized organization';
   return {
     success: false,
-    error: 'Unauthorized. Sign in with a verified @d1aloga.com Google account.',
+    error: `Unauthorized. Sign in with a verified ${domainHint} Google account.`,
   };
 }

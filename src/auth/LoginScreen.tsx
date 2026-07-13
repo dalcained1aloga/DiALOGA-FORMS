@@ -6,9 +6,13 @@
 import React from 'react';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuth } from './AuthContext';
+import { ALLOWED_EMAIL_DOMAINS, formatAllowedDomainsLabel } from './constants';
 
 export default function LoginScreen() {
   const { signInWithCredential, loginError, clearLoginError } = useAuth();
+  const allowedDomainsLabel = formatAllowedDomainsLabel();
+  const singleHostedDomain =
+    ALLOWED_EMAIL_DOMAINS.length === 1 ? ALLOWED_EMAIL_DOMAINS[0] : undefined;
 
   const handleSuccess = (response: CredentialResponse) => {
     if (!response.credential) {
@@ -39,8 +43,14 @@ export default function LoginScreen() {
         </p>
         <h1 className="text-2xl font-bold text-[#0d1b34] tracking-tight mb-2">DiALOGA Forms AI</h1>
         <p className="text-sm text-[#2f4d7a]/80 leading-relaxed mb-8">
-          Inicie sesión con su cuenta de Google Workspace de <strong>@d1aloga.com</strong> para acceder a la
-          plataforma.
+          {ALLOWED_EMAIL_DOMAINS.length === 1 ? (
+            <>
+              Inicie sesión con su cuenta de Google Workspace de <strong>{allowedDomainsLabel}</strong> para
+              acceder a la plataforma.
+            </>
+          ) : (
+            <>Inicie sesión con su cuenta de Google corporativa autorizada para acceder a la plataforma.</>
+          )}
         </p>
 
         <div className="relative inline-flex justify-center mb-4 min-w-[280px]">
@@ -69,7 +79,7 @@ export default function LoginScreen() {
             <GoogleLogin
               onSuccess={handleSuccess}
               onError={() => clearLoginError()}
-              hosted_domain="d1aloga.com"
+              {...(singleHostedDomain ? { hosted_domain: singleHostedDomain } : {})}
               text="signin_with"
               shape="rectangular"
               theme="outline"
@@ -80,7 +90,14 @@ export default function LoginScreen() {
         </div>
 
         <p className="text-xs text-[#2f4d7a]/70">
-          Solo cuentas corporativas <span className="font-semibold text-[#0d1b34]">@d1aloga.com</span>
+          {ALLOWED_EMAIL_DOMAINS.length === 1 ? (
+            <>
+              Solo cuentas corporativas{' '}
+              <span className="font-semibold text-[#0d1b34]">{allowedDomainsLabel}</span>
+            </>
+          ) : (
+            <>Solo cuentas corporativas autorizadas ({allowedDomainsLabel})</>
+          )}
         </p>
 
         {loginError && (
