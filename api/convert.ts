@@ -9,7 +9,7 @@ import mammoth from 'mammoth';
 import multer from 'multer';
 import dotenv from 'dotenv';
 import type { Request, Response } from 'express';
-import { unauthorizedResponse, verifyGoogleIdToken } from './verifyAuth';
+import { unauthorizedResponse, verifyGoogleIdToken } from './verifyAuth.js';
 
 dotenv.config();
 

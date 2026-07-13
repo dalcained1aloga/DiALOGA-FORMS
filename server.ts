@@ -8,8 +8,8 @@ import path from 'path';
 import multer from 'multer';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
-import { convertForm, type UploadedFile } from './api/convert';
-import { unauthorizedResponse, verifyGoogleIdToken } from './api/verifyAuth';
+import { convertForm, type UploadedFile } from './api/convert.js';
+import { unauthorizedResponse, verifyGoogleIdToken } from './api/verifyAuth.js';
 
 dotenv.config();
 
